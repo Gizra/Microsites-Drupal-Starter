@@ -7,3 +7,8 @@ services:
     arguments: ['@current_route_match', '@entity_type.manager', '@server_general.locked_pages']
     tags:
       - { name: event_subscriber }
+  server_general.country_group_access_route_subscriber:
+    class: Drupal\server_general\Routing\CountryGroupAccessRouteSubscriber
+    arguments: ['@og.context', '@og.group_audience_helper', '@og.membership_manager', '@og.group_type_manager']
+    tags:
+      - { name: event_subscriber }

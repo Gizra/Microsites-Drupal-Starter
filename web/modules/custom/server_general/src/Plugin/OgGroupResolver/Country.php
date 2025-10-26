@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\server_general\Plugin\OgGroupResolver;
 
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\node\NodeInterface;
 use Drupal\og\Attribute\OgGroupResolver;
 use Drupal\og\OgResolvedGroupCollectionInterface;
 use Drupal\og\OgRouteGroupResolverBase;
@@ -58,7 +59,7 @@ class Country extends OgRouteGroupResolverBase {
     // Query Country nodes that have the current hostname in field_hostnames.
     $query = $storage->getQuery()
       ->condition('type', 'country')
-      ->condition('status', 1)
+      ->condition('status', NodeInterface::PUBLISHED)
       ->condition('field_hostnames', $hostname)
       ->accessCheck(TRUE)
       ->range(0, 1);

@@ -136,12 +136,6 @@ function server_general_field_widget_single_element_moderation_state_default_for
  * Implements hook_node_access().
  */
 function server_general_node_access(NodeInterface $entity, string $op, AccountInterface $account) {
-  // Check hostname-based group access.
-  $access_result = server_general_node_access__group_content_by_og_resolver($entity, $op);
-  if (!$access_result->isNeutral()) {
-    return $access_result;
-  }
-
   /** @var \Drupal\server_general\LockedPages $locked_pages_service */
   $locked_pages_service = \Drupal::service('server_general.locked_pages');
   // The bundles that can be locked.
@@ -157,82 +151,6 @@ function server_general_node_access(NodeInterface $entity, string $op, AccountIn
     // Add cache tags to the cache metadata.
     $cache_tags = $main_settings->getCacheTags();
     return AccessResult::forbidden()->addCacheableDependency($entity)->addCacheTags($cache_tags);
-  }
-
-  return AccessResult::neutral();
-}
-
-/**
- * Helper function to check group content access based on OG resolver context.
- *
- * @param \Drupal\node\NodeInterface $entity
- *   The node entity.
- * @param string $op
- *   The operation being performed.
- *
- * @return \Drupal\Core\Access\AccessResultInterface
- *   The access result.
- */
-function server_general_node_access__group_content_by_og_resolver(NodeInterface $entity, string $op) {
-  // Only check access for view operations.
-  if ($op !== 'view') {
-    return AccessResult::neutral();
-  }
-
-  /** @var \Drupal\og\OgContextInterface $og_context */
-  $og_context = \Drupal::service('og.context');
-
-  // Get the current group context (resolved by hostname).
-  $current_group = $og_context->getGroup();
-
-  if (!$current_group) {
-    // No group context, allow access.
-    return AccessResult::neutral();
-  }
-
-  /** @var \Drupal\og\OgGroupAudienceHelperInterface $group_audience_helper */
-  $group_audience_helper = \Drupal::service('og.group_audience_helper');
-  /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
-  $membership_manager = \Drupal::service('og.membership_manager');
-  /** @var \Drupal\og\GroupTypeManagerInterface $group_type_manager */
-  $group_type_manager = \Drupal::service('og.group_type_manager');
-
-  // Check if the entity itself is a group (Country).
-  if ($group_type_manager->isGroup($entity->getEntityTypeId(), $entity->bundle())
-    && ($entity->id() !== $current_group->id())) {
-      // Deny access if trying to view a different group than the current
-      // context.
-      return AccessResult::forbidden('Cannot view this group from the current hostname')
-        ->addCacheableDependency($entity)
-        ->addCacheContexts(['url.site']);
-  }
-
-  // Check if this node is group content (e.g., News).
-  if (!$group_audience_helper->hasGroupAudienceField($entity->getEntityTypeId(), $entity->bundle())) {
-    // Not group content, allow access.
-    return AccessResult::neutral();
-  }
-
-  // Get all groups this content belongs to.
-  $content_groups = $membership_manager->getGroups($entity);
-
-  // Check if the content belongs to the current group context.
-  // Since our groups are nodes (Country), we check the 'node' key directly.
-  $belongs_to_current_group = FALSE;
-  if (isset($content_groups['node'])) {
-    foreach ($content_groups['node'] as $group) {
-      if ($group->id() === $current_group->id()) {
-        $belongs_to_current_group = TRUE;
-        break;
-      }
-    }
-  }
-
-  // If content doesn't belong to current group context, deny access.
-  if (!$belongs_to_current_group) {
-    return AccessResult::forbidden('Content does not belong to the current group context')
-      ->addCacheableDependency($entity)
-      ->addCacheContexts(['url.site']);
   }
 
   return AccessResult::neutral();
