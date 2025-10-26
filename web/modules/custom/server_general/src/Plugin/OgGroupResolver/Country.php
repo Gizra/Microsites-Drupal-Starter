@@ -4,12 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\server_general\Plugin\OgGroupResolver;
 
-use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\og\Attribute\OgGroupResolver;
-use Drupal\og\GroupTypeManagerInterface;
 use Drupal\og\OgResolvedGroupCollectionInterface;
 use Drupal\og\OgRouteGroupResolverBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -27,6 +23,23 @@ use Symfony\Component\HttpFoundation\RequestStack;
   description: new TranslatableMarkup('Resolves the Country group based on the current hostname.')
 )]
 class Country extends OgRouteGroupResolverBase {
+
+  /**
+   * The request stack.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected RequestStack $requestStack;
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
+    $plugin = parent::create($container, $configuration, $plugin_id, $plugin_definition);
+    $plugin->requestStack = $container->get('request_stack');
+
+    return $plugin;
+  }
 
   /**
    * {@inheritdoc}
