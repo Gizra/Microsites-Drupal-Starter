@@ -7,6 +7,7 @@ dependencies:
     - field.field.node.news.field_featured_image
     - field.field.node.news.field_publish_date
     - field.field.node.news.field_tags
+    - field.field.node.news.og_audience
     - node.type.news
   module:
     - datetime
@@ -58,6 +59,14 @@ content:
     settings: {  }
     third_party_settings: {  }
     weight: 100
+    region: content
+  og_audience:
+    type: entity_reference_label
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    weight: 107
     region: content
 hidden:
   langcode: true
