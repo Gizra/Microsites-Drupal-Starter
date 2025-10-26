@@ -1,0 +1,15 @@
+uuid: 248b93f4-2ddd-4ef2-9144-80079765327d
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.country
+id: node-country-member
+label: Member
+weight: 0
+group_id: null
+group_type: node
+group_bundle: country
+is_admin: false
+permissions: {  }
+role_type: required

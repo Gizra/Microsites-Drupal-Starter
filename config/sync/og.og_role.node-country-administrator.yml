@@ -1,0 +1,15 @@
+uuid: 12056995-334b-4934-8250-d1c74b93b6b1
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.country
+id: node-country-administrator
+label: Administrator
+weight: 0
+group_id: null
+group_type: node
+group_bundle: country
+is_admin: true
+permissions: {  }
+role_type: null

@@ -1,0 +1,16 @@
+uuid: 9d051adf-57ef-452c-aee5-d0619396a550
+langcode: en
+status: true
+dependencies:
+  config:
+    - node.type.country
+id: node-country-non-member
+label: Non-member
+weight: 0
+group_id: null
+group_type: node
+group_bundle: country
+is_admin: false
+permissions:
+  - subscribe
+role_type: required
