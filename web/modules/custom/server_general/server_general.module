@@ -133,7 +133,7 @@ function server_general_field_widget_single_element_moderation_state_default_for
 }
 
 /**
- * Implements hook_entity_access().
+ * Implements hook_node_access().
  */
 function server_general_node_access(NodeInterface $entity, string $op, AccountInterface $account) {
   // Check hostname-based group access.
@@ -233,7 +233,6 @@ function server_general_node_access__group_content_by_og_resolver(NodeInterface 
 
   return AccessResult::neutral();
 }
-
 
 /**
  * Implements hook_entity_predelete().
