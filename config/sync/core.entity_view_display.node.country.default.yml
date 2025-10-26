@@ -4,10 +4,9 @@ status: true
 dependencies:
   config:
     - field.field.node.country.body
-    - field.field.node.country.field_base_urls
+    - field.field.node.country.field_hostnames
     - node.type.country
   module:
-    - link
     - og
     - text
     - user
@@ -23,15 +22,11 @@ content:
     third_party_settings: {  }
     weight: 101
     region: content
-  field_base_urls:
-    type: link
+  field_hostnames:
+    type: string
     label: above
     settings:
-      trim_length: 80
-      url_only: false
-      url_plain: false
-      rel: ''
-      target: ''
+      link_to_entity: false
     third_party_settings: {  }
     weight: 102
     region: content

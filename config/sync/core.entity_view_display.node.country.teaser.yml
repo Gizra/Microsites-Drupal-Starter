@@ -5,7 +5,7 @@ dependencies:
   config:
     - core.entity_view_mode.node.teaser
     - field.field.node.country.body
-    - field.field.node.country.field_base_urls
+    - field.field.node.country.field_hostnames
     - node.type.country
   module:
     - og
@@ -37,6 +37,6 @@ content:
     weight: 0
     region: content
 hidden:
-  field_base_urls: true
+  field_hostnames: true
   langcode: true
   search_api_excerpt: true

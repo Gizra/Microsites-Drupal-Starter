@@ -4,11 +4,10 @@ status: true
 dependencies:
   config:
     - field.field.node.country.body
-    - field.field.node.country.field_base_urls
+    - field.field.node.country.field_hostnames
     - node.type.country
   module:
     - content_moderation
-    - link
     - path
     - text
 id: node.country.default
@@ -32,13 +31,13 @@ content:
     region: content
     settings: {  }
     third_party_settings: {  }
-  field_base_urls:
-    type: link_default
+  field_hostnames:
+    type: string_textfield
     weight: 122
     region: content
     settings:
-      placeholder_url: ''
-      placeholder_title: ''
+      size: 60
+      placeholder: ''
     third_party_settings: {  }
   langcode:
     type: language_select

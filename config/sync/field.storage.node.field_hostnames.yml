@@ -1,16 +1,18 @@
-uuid: df9bf4ec-3de7-4809-b878-4427c6760a4d
+uuid: 66259b85-a683-46e8-ba28-d90bfc36f3f0
 langcode: en
 status: true
 dependencies:
   module:
-    - link
     - node
-id: node.field_base_urls
-field_name: field_base_urls
+id: node.field_hostnames
+field_name: field_hostnames
 entity_type: node
-type: link
-settings: {  }
-module: link
+type: string
+settings:
+  max_length: 255
+  case_sensitive: false
+  is_ascii: false
+module: core
 locked: false
 cardinality: -1
 translatable: true
