@@ -4,7 +4,7 @@ status: true
 dependencies:
   config:
     - field.field.node.country.body
-    - field.field.node.country.field_emoji_flag
+    - field.field.node.country.field_country_code
     - field.field.node.country.field_hostnames
     - field.field.node.country.field_languages
     - node.type.country
@@ -33,7 +33,7 @@ content:
     region: content
     settings: {  }
     third_party_settings: {  }
-  field_emoji_flag:
+  field_country_code:
     type: options_select
     weight: 124
     region: content
