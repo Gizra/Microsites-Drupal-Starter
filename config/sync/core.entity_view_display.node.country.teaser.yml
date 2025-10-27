@@ -6,6 +6,7 @@ dependencies:
     - core.entity_view_mode.node.teaser
     - field.field.node.country.body
     - field.field.node.country.field_hostnames
+    - field.field.node.country.field_languages
     - node.type.country
   module:
     - og
@@ -38,5 +39,6 @@ content:
     region: content
 hidden:
   field_hostnames: true
+  field_languages: true
   langcode: true
   search_api_excerpt: true

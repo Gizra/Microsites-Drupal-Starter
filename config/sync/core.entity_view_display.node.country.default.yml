@@ -5,9 +5,11 @@ dependencies:
   config:
     - field.field.node.country.body
     - field.field.node.country.field_hostnames
+    - field.field.node.country.field_languages
     - node.type.country
   module:
     - og
+    - options
     - text
     - user
 id: node.country.default
@@ -29,6 +31,13 @@ content:
       link_to_entity: false
     third_party_settings: {  }
     weight: 102
+    region: content
+  field_languages:
+    type: list_default
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    weight: 103
     region: content
   links:
     settings: {  }

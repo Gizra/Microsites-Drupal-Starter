@@ -5,7 +5,9 @@ dependencies:
   config:
     - field.field.node.country.body
     - field.field.node.country.field_hostnames
+    - field.field.node.country.field_languages
     - node.type.country
+    - workflows.workflow.default
   module:
     - content_moderation
     - path
@@ -38,6 +40,12 @@ content:
     settings:
       size: 60
       placeholder: ''
+    third_party_settings: {  }
+  field_languages:
+    type: options_select
+    weight: 123
+    region: content
+    settings: {  }
     third_party_settings: {  }
   langcode:
     type: language_select
