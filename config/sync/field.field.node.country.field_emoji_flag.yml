@@ -1,0 +1,21 @@
+uuid: 16925c7d-5e9b-4aa7-b18c-ca4a6b1cf237
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_emoji_flag
+    - node.type.country
+  module:
+    - options
+id: node.country.field_emoji_flag
+field_name: field_emoji_flag
+entity_type: node
+bundle: country
+label: 'Emoji flag'
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string
