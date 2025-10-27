@@ -353,3 +353,42 @@ function server_general_preprocess_media_oembed_iframe(array &$variables) {
     $variables['media'] = IFrameMarkup::create(str_replace('youtube.com/', 'youtube-nocookie.com/', $variables['media']));
   }
 }
+
+/**
+ * Implements hook_language_switch_links_alter().
+ */
+function server_general_language_switch_links_alter(array &$links, $type, $path) {
+  /** @var \Drupal\og\OgContextInterface $og_context */
+  $og_context = \Drupal::service('og.context');
+
+  // Get the current group context (resolved by hostname).
+  $current_group = $og_context->getGroup();
+
+  if (!$current_group) {
+    // No group context, don't filter languages.
+    return;
+  }
+
+  // Get the allowed languages for this Country group.
+  if (!$current_group->hasField('field_languages')) {
+    // Country doesn't have field_languages, don't filter.
+    return;
+  }
+
+  $allowed_languages = [];
+  foreach ($current_group->get('field_languages') as $item) {
+    $allowed_languages[] = $item->value;
+  }
+
+  if (empty($allowed_languages)) {
+    // No languages configured, don't filter.
+    return;
+  }
+
+  // Filter out languages not allowed for this Country.
+  foreach ($links as $langcode => $link) {
+    if (!in_array($langcode, $allowed_languages)) {
+      unset($links[$langcode]);
+    }
+  }
+}

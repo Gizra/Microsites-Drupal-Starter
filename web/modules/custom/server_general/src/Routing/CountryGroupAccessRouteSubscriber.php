@@ -53,6 +53,43 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
   }
 
   /**
+   * Checks if a node's language is allowed for the given Country group.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node to check.
+   * @param \Drupal\Core\Entity\ContentEntityInterface $country_group
+   *   The Country group entity.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface|null
+   *   Returns forbidden if language is not allowed, null if check should be
+   *   skipped or language is allowed.
+   */
+  protected function checkLanguageAccess(NodeInterface $node, $country_group): ?AccessResultInterface {
+    if (!$country_group->hasField('field_languages')) {
+      return NULL;
+    }
+
+    $allowed_languages = [];
+    foreach ($country_group->get('field_languages') as $item) {
+      $allowed_languages[] = $item->value;
+    }
+
+    if (empty($allowed_languages)) {
+      return NULL;
+    }
+
+    $node_langcode = $node->language()->getId();
+    if (!in_array($node_langcode, $allowed_languages)) {
+      return AccessResult::forbidden('This language is not available for the current country context')
+        ->addCacheableDependency($node)
+        ->addCacheableDependency($country_group)
+        ->addCacheContexts(['url.site', 'languages:language_interface']);
+    }
+
+    return NULL;
+  }
+
+  /**
    * Checks if the current node can be accessed based on hostname group context.
    *
    * @param \Drupal\Core\Session\AccountInterface $account
@@ -64,14 +101,14 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    *   The access result.
    */
   public function access(AccountInterface $account, NodeInterface $node): AccessResultInterface {
-    // Get the current group context (resolved by hostname).
+    // Get the current group context (resolved by hostname or other means).
     $current_group = $this->ogContext->getGroup();
 
     if (!$current_group) {
-      // No group context, allow access.
+      // No group context (main site hostname), allow access to all content.
       return AccessResult::allowed()
         ->addCacheableDependency($node)
-        ->addCacheContexts(['url.site']);
+        ->addCacheContexts(['url.site', 'languages:language_interface']);
     }
 
     // Check if the entity itself is a group (Country).
@@ -81,12 +118,19 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       if ($node->id() !== $current_group->id()) {
         return AccessResult::forbidden('Cannot view this group from the current hostname')
           ->addCacheableDependency($node)
+          ->addCacheableDependency($current_group)
           ->addCacheContexts(['url.site']);
       }
-      // Group matches current context, allow access.
+      // Group matches current context, check language access.
+      $language_access = $this->checkLanguageAccess($node, $current_group);
+      if ($language_access) {
+        return $language_access;
+      }
+
       return AccessResult::allowed()
         ->addCacheableDependency($node)
-        ->addCacheContexts(['url.site']);
+        ->addCacheableDependency($current_group)
+        ->addCacheContexts(['url.site', 'languages:language_interface']);
     }
 
     // Check if this node is group content (e.g., News).
@@ -94,7 +138,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       // Not group content, allow access.
       return AccessResult::allowed()
         ->addCacheableDependency($node)
-        ->addCacheContexts(['url.site']);
+        ->addCacheContexts(['url.site', 'languages:language_interface']);
     }
 
     // Get all groups this content belongs to.
@@ -119,10 +163,17 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
         ->addCacheContexts(['url.site']);
     }
 
-    // Content belongs to current group, allow access.
+    // Check if the node's language is allowed for this Country group.
+    $language_access = $this->checkLanguageAccess($node, $current_group);
+    if ($language_access) {
+      return $language_access;
+    }
+
+    // Content belongs to current group and language is allowed, allow access.
     return AccessResult::allowed()
       ->addCacheableDependency($node)
-      ->addCacheContexts(['url.site']);
+      ->addCacheableDependency($current_group)
+      ->addCacheContexts(['url.site', 'languages:language_interface']);
   }
 
 }

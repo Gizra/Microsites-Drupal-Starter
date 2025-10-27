@@ -10,8 +10,4 @@ delete_orphans_plugin_id: simple
 deny_subscribe_without_approval: true
 group_resolvers:
   - country_hostname
-  - route_group
-  - route_group_content
-  - request_query_argument
-  - user_access
 auto_add_group_owner_membership: true
