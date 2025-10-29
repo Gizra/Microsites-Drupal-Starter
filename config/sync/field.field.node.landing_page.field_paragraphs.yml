@@ -6,6 +6,7 @@ dependencies:
     - field.storage.node.field_paragraphs
     - node.type.landing_page
     - paragraphs.paragraphs_type.accordion
+    - paragraphs.paragraphs_type.country_info
     - paragraphs.paragraphs_type.cta
     - paragraphs.paragraphs_type.documents
     - paragraphs.paragraphs_type.form
@@ -19,7 +20,13 @@ dependencies:
     - paragraphs.paragraphs_type.search
     - paragraphs.paragraphs_type.text
   module:
+    - ai_translate
     - entity_reference_revisions
+third_party_settings:
+  ai_translate:
+    entity_reference:
+      translate_references: default
+    translate_references: default
 id: node.landing_page.field_paragraphs
 field_name: field_paragraphs
 entity_type: node
@@ -36,6 +43,7 @@ settings:
     target_bundles:
       accordion: accordion
       cta: cta
+      country_info: country_info
       documents: documents
       form: form
       hero_image: hero_image
@@ -50,54 +58,57 @@ settings:
     negate: 0
     target_bundles_drag_drop:
       accordion:
-        weight: -35
+        weight: -37
         enabled: true
       accordion_item:
-        weight: -22
+        weight: -23
         enabled: false
+      country_info:
+        weight: -35
+        enabled: true
       cta:
-        weight: -34
+        weight: -36
         enabled: true
       documents:
-        weight: -33
+        weight: -34
         enabled: true
       form:
-        weight: -32
+        weight: -33
         enabled: true
       hero_image:
-        weight: -31
+        weight: -32
         enabled: true
       info_card:
-        weight: -19
-        enabled: false
-      info_cards:
-        weight: -30
-        enabled: true
-      news_teasers:
-        weight: -29
-        enabled: true
-      people_teasers:
-        weight: -28
-        enabled: true
-      person_teaser:
         weight: -20
         enabled: false
-      quick_link_item:
+      info_cards:
+        weight: -31
+        enabled: true
+      news_teasers:
+        weight: -30
+        enabled: true
+      people_teasers:
+        weight: -29
+        enabled: true
+      person_teaser:
         weight: -21
         enabled: false
+      quick_link_item:
+        weight: -22
+        enabled: false
       quick_links:
-        weight: -27
+        weight: -28
         enabled: true
       quote:
-        weight: -26
+        weight: -27
         enabled: true
       related_content:
-        weight: -25
+        weight: -26
         enabled: true
       search:
-        weight: -24
+        weight: -25
         enabled: true
       text:
-        weight: -23
+        weight: -24
         enabled: true
 field_type: entity_reference_revisions

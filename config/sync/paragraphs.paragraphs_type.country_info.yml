@@ -1,0 +1,10 @@
+uuid: 4deb6dd5-cc5a-4113-bbf8-d5044215910c
+langcode: en
+status: true
+dependencies: {  }
+id: country_info
+label: 'Country info'
+icon_uuid: null
+icon_default: null
+description: ''
+behavior_plugins: {  }
