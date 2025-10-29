@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\server_general\Plugin\EntityViewBuilder;
 
-use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\node\NodeInterface;
 use Drupal\server_general\EntityViewBuilder\NodeViewBuilderAbstract;
 use Drupal\server_general\ThemeTrait\CountryThemeTrait;
@@ -78,7 +77,7 @@ class NodeCountry extends NodeViewBuilderAbstract {
 
     $items = $this->buildEntities($news_nodes, 'teaser');
     // Build the news teasers element.
-    // @todo: Add t()
+    // @todo Add t()
     return $this->buildElementNewsTeasers(('Latest News'), [], $items);
   }
 
