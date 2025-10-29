@@ -77,7 +77,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    *
    * @param \Drupal\node\NodeInterface $node
    *   The node being accessed.
-   * @param mixed $current_group
+   * @param ?\Drupal\Core\Entity\ContentEntityInterface $current_group
    *   The current group context.
    */
   protected function redirectToCorrectHostname(NodeInterface $node, $current_group): void {
@@ -114,6 +114,11 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
 
     // No target group found.
     if (!$target_group) {
+      return;
+    }
+
+    // Ensure target group is a Node (Country groups are nodes).
+    if (!$target_group instanceof NodeInterface) {
       return;
     }
 
