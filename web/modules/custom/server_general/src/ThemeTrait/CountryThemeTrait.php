@@ -10,25 +10,57 @@ namespace Drupal\server_general\ThemeTrait;
 trait CountryThemeTrait {
 
   use ElementLayoutThemeTrait;
+  use ElementWrapThemeTrait;
   use NewsTeasersThemeTrait;
 
   /**
    * Build Country element.
    *
+   * @param string $country_code
+   *   The country code.
    * @param string $title
    *   The title.
+   * @param array $body
+   *   The body render array.
    * @param array $news
    *   The news items array.
    *
    * @return array
    *   Render array.
    */
-  protected function buildElementCountry(string $title, array $body, array $news = []): array {
-    return $this->buildElementLayoutTitleBodyAndItems(
-      $title,
-      $body,
-      $news,
-    );
+  protected function buildElementCountry(string $country_code, string $title, array $body, array $news = []): array {
+    $elements = [];
+
+    $title_with_flag = $this->getFlagEmojiFromCountryCode($country_code) . ' ' . $title;
+
+    $element = [];
+    $element[] = $this->buildPageTitle($title_with_flag);
+    $element[] = $this->wrapProseText($body);
+
+    $element = $this->wrapContainerVerticalSpacing($element);
+    $elements[] = $this->wrapContainerWide($element);
+
+    $elements[] = $news;
+
+    return $this->wrapContainerVerticalSpacing($elements);
+  }
+
+  /**
+   * Get flag emoji from country code.
+   *
+   * @param string $country_code
+   *   Two-letter country code (e.g., 'es', 'iq', 'us').
+   *
+   * @return string
+   *   Flag emoji.
+   */
+  protected function getFlagEmojiFromCountryCode(string $country_code): string {
+    $code = strtoupper($country_code);
+    $emoji = '';
+    foreach (str_split($code) as $char) {
+      $emoji .= mb_chr(127397 + ord($char), 'UTF-8');
+    }
+    return $emoji;
   }
 
 }
