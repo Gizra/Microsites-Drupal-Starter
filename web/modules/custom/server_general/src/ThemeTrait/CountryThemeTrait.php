@@ -22,27 +22,20 @@ trait CountryThemeTrait {
    *   The title.
    * @param array $body
    *   The body render array.
-   * @param array $news
-   *   The news items array.
    *
    * @return array
    *   Render array.
    */
-  protected function buildElementCountry(string $country_code, string $title, array $body, array $news = []): array {
+  protected function buildElementCountry(string $country_code, string $title, array $body): array {
     $elements = [];
 
     $title_with_flag = $this->getFlagEmojiFromCountryCode($country_code) . ' ' . $title;
 
-    $element = [];
-    $element[] = $this->buildPageTitle($title_with_flag);
-    $element[] = $this->wrapProseText($body);
+    $elements[] = $this->buildPageTitle($title_with_flag);
+    $elements[] = $this->wrapProseText($body);
 
-    $element = $this->wrapContainerVerticalSpacing($element);
-    $elements[] = $this->wrapContainerWide($element);
-
-    $elements[] = $news;
-
-    return $this->wrapContainerVerticalSpacing($elements);
+    $elements = $this->wrapContainerVerticalSpacing($elements);
+    return $this->wrapContainerWide($elements);
   }
 
   /**

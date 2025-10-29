@@ -73,7 +73,7 @@ class ParagraphCountryInfo extends EntityViewBuilderPluginAbstract {
     $title = $current_group->label();
     $body = $this->buildProcessedText($current_group, 'body');
 
-    $element = $this->buildElementCountry($country_code, $title, $body, []);
+    $element = $this->buildElementCountry($country_code, $title, $body);
 
     // Add cache dependency for the Country node.
     $cache = CacheableMetadata::createFromRenderArray($element);
