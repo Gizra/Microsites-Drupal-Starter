@@ -54,6 +54,11 @@ class Country extends OgRouteGroupResolverBase {
 
     $hostname = $request->getHost();
 
+    // Validate hostname format.
+    if (!filter_var($hostname, FILTER_VALIDATE_DOMAIN)) {
+      return;
+    }
+
     $storage = $this->entityTypeManager->getStorage('node');
 
     // Query Country nodes that have the current hostname in field_hostnames.

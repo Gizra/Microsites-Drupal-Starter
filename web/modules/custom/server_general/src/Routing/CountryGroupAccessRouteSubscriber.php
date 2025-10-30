@@ -138,6 +138,11 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       return;
     }
 
+    // Validate hostname before redirect to prevent open redirects.
+    if (!filter_var($correct_hostname, FILTER_VALIDATE_DOMAIN)) {
+      return;
+    }
+
     // Perform redirect.
     $redirect_url = $request->getScheme() . '://' . $correct_hostname;
     if ($request->getPort() && !in_array($request->getPort(), [80, 443])) {
