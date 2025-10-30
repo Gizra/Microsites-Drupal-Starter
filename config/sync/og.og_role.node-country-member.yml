@@ -11,5 +11,6 @@ group_id: null
 group_type: node
 group_bundle: country
 is_admin: false
-permissions: {  }
+permissions:
+  - 'edit any news content'
 role_type: required

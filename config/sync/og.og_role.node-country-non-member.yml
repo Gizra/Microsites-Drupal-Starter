@@ -12,5 +12,6 @@ group_type: node
 group_bundle: country
 is_admin: false
 permissions:
+  - 'edit any news content'
   - subscribe
 role_type: required
