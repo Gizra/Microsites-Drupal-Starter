@@ -7,13 +7,13 @@ namespace Drupal\server_general\Routing;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Routing\RouteSubscriberBase;
+use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\node\NodeInterface;
 use Drupal\og\GroupTypeManagerInterface;
 use Drupal\og\MembershipManagerInterface;
 use Drupal\og\OgContextInterface;
 use Drupal\og\OgGroupAudienceHelperInterface;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouteCollection;
 
@@ -24,6 +24,22 @@ use Symfony\Component\Routing\RouteCollection;
  * on the correct hostname based on OG group context.
  */
 final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
+
+  /**
+   * Node routes that require group access checks and redirects.
+   */
+  protected const NODE_ROUTES = [
+    'entity.node.canonical',
+    'entity.node.edit_form',
+    'entity.node.delete_form',
+    'entity.node.content_translation_overview',
+    'entity.node.content_translation_add',
+    'entity.node.content_translation_edit',
+    'entity.node.content_translation_delete',
+    'entity.node.devel_load',
+    'entity.node.devel_render',
+    'entity.node.devel_definition',
+  ];
 
   /**
    * Constructs a CountryGroupAccessRouteSubscriber object.
@@ -52,20 +68,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    */
   protected function alterRoutes(RouteCollection $collection) {
     // Add custom access check to node routes.
-    $routes = [
-      'entity.node.canonical',
-      'entity.node.edit_form',
-      'entity.node.delete_form',
-      'entity.node.content_translation_overview',
-      'entity.node.content_translation_add',
-      'entity.node.content_translation_edit',
-      'entity.node.content_translation_delete',
-      'entity.node.devel_load',
-      'entity.node.devel_render',
-      'entity.node.devel_definition',
-    ];
-
-    foreach ($routes as $route_name) {
+    foreach (self::NODE_ROUTES as $route_name) {
       if ($route = $collection->get($route_name)) {
         $route->setRequirement('_custom_access', 'server_general.country_group_access_route_subscriber::access');
       }
@@ -77,10 +80,10 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    *
    * @param \Drupal\node\NodeInterface $node
    *   The node being accessed.
-   * @param ?\Drupal\Core\Entity\ContentEntityInterface $current_group
+   * @param ?\Drupal\node\NodeInterface $current_group
    *   The current group context.
    */
-  protected function redirectToCorrectHostname(NodeInterface $node, $current_group): void {
+  protected function redirectToCorrectHostname(NodeInterface $node, ?NodeInterface $current_group): void {
     $request = $this->requestStack->getCurrentRequest();
     if (!$request) {
       return;
@@ -122,11 +125,6 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       return;
     }
 
-    // No hostnames field.
-    if (!$target_group->hasField('field_hostnames')) {
-      return;
-    }
-
     $hostnames = $target_group->get('field_hostnames');
     if ($hostnames->isEmpty()) {
       return;
@@ -140,6 +138,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
 
     // Validate hostname before redirect to prevent open redirects.
     if (!filter_var($correct_hostname, FILTER_VALIDATE_DOMAIN)) {
+      \Drupal::logger('server_general')->warning('Invalid redirect hostname: @hostname', ['@hostname' => $correct_hostname]);
       return;
     }
 
@@ -150,7 +149,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     }
     $redirect_url .= $request->getRequestUri();
 
-    $response = new RedirectResponse($redirect_url);
+    $response = new TrustedRedirectResponse($redirect_url);
     $response->send();
     exit;
   }
@@ -160,18 +159,14 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    *
    * @param \Drupal\node\NodeInterface $node
    *   The node to check.
-   * @param \Drupal\Core\Entity\ContentEntityInterface $country_group
+   * @param \Drupal\node\NodeInterface $country_group
    *   The Country group entity.
    *
    * @return \Drupal\Core\Access\AccessResultInterface|null
    *   Returns forbidden if language is not allowed, null if check should be
    *   skipped or language is allowed.
    */
-  protected function checkLanguageAccess(NodeInterface $node, $country_group): ?AccessResultInterface {
-    if (!$country_group->hasField('field_languages')) {
-      return NULL;
-    }
-
+  protected function checkLanguageAccess(NodeInterface $node, NodeInterface $country_group): ?AccessResultInterface {
     $allowed_languages = [];
     foreach ($country_group->get('field_languages') as $item) {
       $allowed_languages[] = $item->value;
@@ -212,22 +207,9 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     // Only redirect on node-specific routes, not admin listing routes.
     if ($account->hasPermission('administer nodes')) {
       $route_name = $request ? $request->attributes->get('_route') : NULL;
-      // List of routes where redirect should happen.
-      $redirect_routes = [
-        'entity.node.canonical',
-        'entity.node.edit_form',
-        'entity.node.delete_form',
-        'entity.node.content_translation_overview',
-        'entity.node.content_translation_add',
-        'entity.node.content_translation_edit',
-        'entity.node.content_translation_delete',
-        'entity.node.devel_load',
-        'entity.node.devel_render',
-        'entity.node.devel_definition',
-      ];
 
       // Only perform redirect logic on node-specific routes.
-      if ($route_name && in_array($route_name, $redirect_routes)) {
+      if ($route_name && in_array($route_name, self::NODE_ROUTES)) {
         // Check and perform redirect if needed.
         $this->redirectToCorrectHostname($node, $current_group);
       }

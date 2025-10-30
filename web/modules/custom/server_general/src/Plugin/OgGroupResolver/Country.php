@@ -56,6 +56,10 @@ class Country extends OgRouteGroupResolverBase {
 
     // Validate hostname format.
     if (!filter_var($hostname, FILTER_VALIDATE_DOMAIN)) {
+      // Only log warning for non-empty hostnames (empty means CLI context).
+      if (!empty($hostname)) {
+        \Drupal::logger('server_general')->warning('Invalid hostname format: @hostname', ['@hostname' => $hostname]);
+      }
       return;
     }
 
@@ -87,8 +91,8 @@ class Country extends OgRouteGroupResolverBase {
     // Verify it's actually a group.
     if ($this->groupTypeManager->isGroup($country->getEntityTypeId(), $country->bundle())) {
       // Add the group with the 'url.site' cache context since it depends on
-      // the hostname.
-      $collection->addGroup($country, ['url.site']);
+      // the hostname, and cache tags for proper invalidation.
+      $collection->addGroup($country, ['url.site'], $country->getCacheTags());
 
       // Since we found a specific Country based on the hostname, we can be
       // certain this is the correct group context and stop propagation.

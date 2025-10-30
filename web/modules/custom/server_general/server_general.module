@@ -370,12 +370,6 @@ function server_general_language_switch_links_alter(array &$links, string $type,
     return;
   }
 
-  // Get the allowed languages for this Country group.
-  if (!$current_group->hasField('field_languages')) {
-    // Country doesn't have field_languages, don't filter.
-    return;
-  }
-
   $allowed_languages = [];
   foreach ($current_group->get('field_languages') as $item) {
     $allowed_languages[] = $item->value;
