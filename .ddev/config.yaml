@@ -7,7 +7,7 @@ router_http_port: "8880"
 router_https_port: "4443"
 xdebug_enabled: false
 additional_hostnames:
-    - ar.mysite
+    - iq.mysite
     - es.mysite
     - us.mysite
 additional_fqdns: []

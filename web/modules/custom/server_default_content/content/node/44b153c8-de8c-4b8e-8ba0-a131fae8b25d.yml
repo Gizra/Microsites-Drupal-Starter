@@ -73,7 +73,7 @@ default:
       value: iq
   field_hostnames:
     -
-      value: ar.mysite.ddev.site
+      value: iq.mysite.ddev.site
   field_languages:
     -
       value: ar
