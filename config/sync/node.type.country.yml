@@ -11,7 +11,7 @@ third_party_settings:
     parent: 'main:'
 name: Country
 type: country
-description: null
+description: 'The country info (also acts as a Group).'
 help: null
 new_revision: true
 preview_mode: 1
