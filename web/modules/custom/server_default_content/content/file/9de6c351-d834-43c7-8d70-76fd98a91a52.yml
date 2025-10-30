@@ -1,7 +1,7 @@
 _meta:
   version: '1.0'
   entity_type: file
-  uuid: 04626283-cdc2-4801-b700-d41077299080
+  uuid: 9de6c351-d834-43c7-8d70-76fd98a91a52
   default_langcode: en
   depends:
     11318276-1099-48d3-ae54-1e4746558d2e: user
@@ -11,19 +11,19 @@ default:
       entity: 11318276-1099-48d3-ae54-1e4746558d2e
   filename:
     -
-      value: 403.png
+      value: no-thumbnail.png
   uri:
     -
-      value: 'public://403_1.png'
+      value: 'public://media-icons/generic/no-thumbnail.png'
   filemime:
     -
       value: image/png
   filesize:
     -
-      value: 23255
+      value: 7318
   status:
     -
       value: true
   created:
     -
-      value: 1732228848
+      value: 1761491685
