@@ -203,6 +203,14 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     $current_group = $this->ogContext->getGroup();
     $request = $this->requestStack->getCurrentRequest();
 
+    // Ensure current group is a Node (Country groups are nodes) or null.
+    if ($current_group && !$current_group instanceof NodeInterface) {
+      // Invalid group type, allow access.
+      return AccessResult::allowed()
+        ->addCacheableDependency($node)
+        ->addCacheContexts(['url.site', 'languages:language_interface']);
+    }
+
     // Check if node administrators should be redirected to correct hostname.
     // Only redirect on node-specific routes, not admin listing routes.
     if ($account->hasPermission('administer nodes')) {

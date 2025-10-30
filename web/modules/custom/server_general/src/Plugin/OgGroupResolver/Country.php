@@ -91,8 +91,8 @@ class Country extends OgRouteGroupResolverBase {
     // Verify it's actually a group.
     if ($this->groupTypeManager->isGroup($country->getEntityTypeId(), $country->bundle())) {
       // Add the group with the 'url.site' cache context since it depends on
-      // the hostname, and cache tags for proper invalidation.
-      $collection->addGroup($country, ['url.site'], $country->getCacheTags());
+      // the hostname.
+      $collection->addGroup($country, ['url.site']);
 
       // Since we found a specific Country based on the hostname, we can be
       // certain this is the correct group context and stop propagation.
