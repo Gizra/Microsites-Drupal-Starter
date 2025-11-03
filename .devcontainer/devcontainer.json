@@ -1,7 +1,10 @@
 {
-    "image": "mcr.microsoft.com/devcontainers/base:debian",
+    "image": "mcr.microsoft.com/devcontainers/php:8.3-bookworm",
     "features": {
-        "ghcr.io/ddev/ddev/install-ddev:latest": {}
+        "ghcr.io/ddev/ddev/install-ddev:latest": {},
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "lts"
+        }
     },
     "postCreateCommand": "./codespaces_setup.sh"
 }
