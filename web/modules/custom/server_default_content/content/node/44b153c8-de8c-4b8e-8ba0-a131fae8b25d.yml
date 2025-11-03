@@ -73,7 +73,7 @@ default:
       value: iq
   field_hostnames:
     -
-      value: iq.mysite.ddev.site
+      value: iq.microsites-drupal-starter.ddev.site
   field_languages:
     -
       value: ar

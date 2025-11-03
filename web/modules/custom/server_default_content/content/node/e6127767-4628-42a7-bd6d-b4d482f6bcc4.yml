@@ -74,7 +74,7 @@ default:
       value: es
   field_hostnames:
     -
-      value: es.mysite.ddev.site
+      value: es.microsites-drupal-starter.ddev.site
   field_languages:
     -
       value: en
