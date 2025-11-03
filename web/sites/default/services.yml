@@ -39,7 +39,7 @@ parameters:
     # the cookie domain should start with a dot.
     #
     # @default none
-    # cookie_domain: '.example.com'
+    cookie_domain: '.mysite.ddev.site'
     #
     # Set the SameSite cookie attribute: 'None', 'Lax', or 'Strict'. If set,
     # this value will override the server value. See
