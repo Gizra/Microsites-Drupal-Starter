@@ -230,22 +230,6 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
         ->addCacheContexts(['url.site', 'languages:language_interface']);
     }
 
-    // Check if node administrators should be redirected to correct hostname.
-    // Only redirect on node-specific routes, not admin listing routes.
-    if ($account->hasPermission('administer nodes')) {
-      $route_name = $request ? $request->attributes->get('_route') : NULL;
-
-      // Only perform redirect logic on node-specific routes.
-      if ($route_name && in_array($route_name, self::NODE_ROUTES)) {
-        // Check and perform redirect if needed.
-        $this->redirectToCorrectHostname($node, $current_group);
-      }
-
-      // Allow access if no redirect happened.
-      return AccessResult::allowed()
-        ->addCacheableDependency($node)
-        ->addCacheContexts(['url.site', 'languages:language_interface', 'user.permissions']);
-    }
 
     if (!$current_group) {
       // No group context (main site hostname), allow access to all content.
@@ -294,6 +278,16 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     // Get all groups this content belongs to.
     $content_groups = $this->membershipManager->getGroups($node);
 
+    // Check if privileged users need to be redirected to correct hostname BEFORE
+    // denying access. This allows editors to work on unpublished content but on
+    // the right domain.
+    if ($account->hasPermission('bypass node access') || $account->hasPermission('administer nodes')) {
+      $route_name = $request ? $request->attributes->get('_route') : NULL;
+      if ($route_name && in_array($route_name, self::NODE_ROUTES)) {
+        $this->redirectToCorrectHostname($node, $current_group);
+      }
+    }
+
     // Check if the content belongs to the current group context.
     // Since our groups are nodes (Country), we check the 'node' key directly.
     $belongs_to_current_group = FALSE;
@@ -306,11 +300,16 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       }
     }
 
-    // If content doesn't belong to current group context, deny access.
+    // If content doesn't belong to current group context, deny access for
+    // regular users. Privileged users are allowed but should have been
+    // redirected to the correct hostname above.
     if (!$belongs_to_current_group) {
-      return AccessResult::forbidden('Content does not belong to the current group context')
-        ->addCacheableDependency($node)
-        ->addCacheContexts(['url.site']);
+      // Allow privileged users to bypass group restrictions.
+      if (!$account->hasPermission('bypass node access') && !$account->hasPermission('administer nodes')) {
+        return AccessResult::forbidden('Content does not belong to the current group context')
+          ->addCacheableDependency($node)
+          ->addCacheContexts(['url.site']);
+      }
     }
 
     // Show warning if viewing unpublished content.
