@@ -186,24 +186,26 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     }
 
     $node_langcode = $node->language()->getId();
-    if (!in_array($node_langcode, $allowed_languages)) {
-      // Allow editors to work on unpublished languages before they're enabled
-      // for the country. This allows content creation and translation work.
-      if ($account->hasPermission('bypass node access') || $account->hasPermission('administer nodes')) {
-        $language = $node->language();
-        $this->messenger->addWarning($this->t('You are viewing content in a language (@language) that is not enabled for this country.', [
-          '@language' => $language->getName(),
-        ]));
-        return NULL;
-      }
 
-      return AccessResult::forbidden('This language is not available for the current country context')
-        ->addCacheableDependency($node)
-        ->addCacheableDependency($country_group)
-        ->addCacheContexts(['url.site', 'languages:language_interface', 'user.permissions']);
+    // Language is allowed for this country.
+    if (in_array($node_langcode, $allowed_languages)) {
+      return NULL;
     }
 
-    return NULL;
+    // Language is not enabled but privileged users can still access.
+    if ($account->hasPermission('bypass node access') || $account->hasPermission('administer nodes')) {
+      $language = $node->language();
+      $this->messenger->addWarning($this->t('You are viewing content in a language (@language) that is not enabled for this country.', [
+        '@language' => $language->getName(),
+      ]));
+      return NULL;
+    }
+
+    // Language is not available for regular users.
+    return AccessResult::forbidden('This language is not available for the current country context')
+      ->addCacheableDependency($node)
+      ->addCacheableDependency($country_group)
+      ->addCacheContexts(['url.site', 'languages:language_interface', 'user.permissions']);
   }
 
   /**
@@ -218,43 +220,42 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    *   The access result.
    */
   public function access(AccountInterface $account, NodeInterface $node): AccessResultInterface {
-    // Get the current group context (resolved by hostname or other means).
     $current_group = $this->ogContext->getGroup();
     $request = $this->requestStack->getCurrentRequest();
+    $is_privileged = $account->hasPermission('bypass node access') || $account->hasPermission('administer nodes');
 
-    // Ensure current group is a Node (Country groups are nodes) or null.
+    // Invalid group type, allow access.
     if ($current_group && !$current_group instanceof NodeInterface) {
-      // Invalid group type, allow access.
       return AccessResult::allowed()
         ->addCacheableDependency($node)
         ->addCacheContexts(['url.site', 'languages:language_interface']);
     }
 
+    // No group context (main site hostname), allow access to all content.
     if (!$current_group) {
-      // No group context (main site hostname), allow access to all content.
       return AccessResult::allowed()
         ->addCacheableDependency($node)
         ->addCacheContexts(['url.site', 'languages:language_interface']);
     }
 
-    // Check if the entity itself is a group (Country).
+    // Handle Country group nodes.
     if ($this->groupTypeManager->isGroup($node->getEntityTypeId(), $node->bundle())) {
-      // Deny access if trying to view a different group than the current
-      // context.
+      // Viewing a different Country than the current context.
       if ($node->id() !== $current_group->id()) {
         return AccessResult::forbidden('Cannot view this group from the current hostname')
           ->addCacheableDependency($node)
           ->addCacheableDependency($current_group)
           ->addCacheContexts(['url.site']);
       }
-      // Show warning if viewing unpublished country.
+
+      // Show warning for unpublished country.
       if (!$node->isPublished()) {
         $this->messenger->addWarning($this->t('You are viewing an unpublished country: @title', [
           '@title' => $node->label(),
         ]));
       }
 
-      // Group matches current context, check language access.
+      // Check language access.
       $language_access = $this->checkLanguageAccess($node, $current_group, $account);
       if ($language_access) {
         return $language_access;
@@ -266,29 +267,23 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
         ->addCacheContexts(['url.site', 'languages:language_interface']);
     }
 
-    // Check if this node is group content (e.g., News).
+    // Not group content, allow access.
     if (!$this->groupAudienceHelper->hasGroupAudienceField($node->getEntityTypeId(), $node->bundle())) {
-      // Not group content, allow access.
       return AccessResult::allowed()
         ->addCacheableDependency($node)
         ->addCacheContexts(['url.site', 'languages:language_interface']);
     }
 
-    // Get all groups this content belongs to.
+    // Handle group content (e.g., News articles).
     $content_groups = $this->membershipManager->getGroups($node);
 
-    // Check if privileged users need to be redirected to correct hostname
-    // before denying access. This allows editors to work on unpublished content
-    // but on the right domain.
-    if ($account->hasPermission('bypass node access') || $account->hasPermission('administer nodes')) {
-      $route_name = $request ? $request->attributes->get('_route') : NULL;
-      if ($route_name && in_array($route_name, self::NODE_ROUTES)) {
-        $this->redirectToCorrectHostname($node, $current_group);
-      }
+    // Redirect privileged users to correct hostname before access checks.
+    $route_name = $request ? $request->attributes->get('_route') : NULL;
+    if ($is_privileged && !empty($route_name) && in_array($route_name, self::NODE_ROUTES)) {
+      $this->redirectToCorrectHostname($node, $current_group);
     }
 
-    // Check if the content belongs to the current group context.
-    // Since our groups are nodes (Country), we check the 'node' key directly.
+    // Check if content belongs to current group.
     $belongs_to_current_group = FALSE;
     if (isset($content_groups['node'])) {
       foreach ($content_groups['node'] as $group) {
@@ -299,32 +294,26 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       }
     }
 
-    // If content doesn't belong to current group context, deny access for
-    // regular users. Privileged users are allowed but should have been
-    // redirected to the correct hostname above.
-    if (!$belongs_to_current_group) {
-      // Allow privileged users to bypass group restrictions.
-      if (!$account->hasPermission('bypass node access') && !$account->hasPermission('administer nodes')) {
-        return AccessResult::forbidden('Content does not belong to the current group context')
-          ->addCacheableDependency($node)
-          ->addCacheContexts(['url.site']);
-      }
+    // Content doesn't belong to current group and user is not privileged.
+    if (!$belongs_to_current_group && !$is_privileged) {
+      return AccessResult::forbidden('Content does not belong to the current group context')
+        ->addCacheableDependency($node)
+        ->addCacheContexts(['url.site']);
     }
 
-    // Show warning if viewing unpublished content.
+    // Show warning for unpublished content.
     if (!$node->isPublished()) {
       $this->messenger->addWarning($this->t('You are viewing unpublished content: @title', [
         '@title' => $node->label(),
       ]));
     }
 
-    // Check if the node's language is allowed for this Country group.
+    // Check language access.
     $language_access = $this->checkLanguageAccess($node, $current_group, $account);
     if ($language_access) {
       return $language_access;
     }
 
-    // Content belongs to current group and language is allowed, allow access.
     return AccessResult::allowed()
       ->addCacheableDependency($node)
       ->addCacheableDependency($current_group)
