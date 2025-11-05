@@ -6,7 +6,6 @@ namespace Drupal\server_general\Plugin\OgGroupResolver;
 
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\node\NodeInterface;
 use Drupal\og\Attribute\OgGroupResolver;
 use Drupal\og\OgResolvedGroupCollectionInterface;
 use Drupal\og\OgRouteGroupResolverBase;
@@ -78,14 +77,16 @@ class Country extends OgRouteGroupResolverBase {
     $query = $storage->getQuery()
       ->condition('type', 'country')
       ->condition('field_hostnames', $hostname)
+      // We don't filter by published status, this allows editors to work on
+      // unpublished countries.
+      // For non-admin users, the access check will ensure they can only see
+      // published countries they have access to.
+      // @see \Drupal\server_general\Routing\CountryGroupAccessRouteSubscriber::access
       ->accessCheck(TRUE)
       ->range(0, 1);
 
-    // Only filter by published status if user doesn't have permission to view
-    // unpublished content. This allows editors to work on unpublished
-    // countries.
-    if (!$this->currentUser->hasPermission('bypass node access') && !$this->currentUser->hasPermission('administer nodes')) {
-      $query->condition('status', NodeInterface::PUBLISHED);
+    if (!$this->currentUser->hasPermission('bypass node access')) {
+      // $query->condition('status', NodeInterface::PUBLISHED);
     }
 
     $nids = $query->execute();

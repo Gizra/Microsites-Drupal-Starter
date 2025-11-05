@@ -89,8 +89,8 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
   /**
    * Checks if user is privileged to bypass group restrictions.
    *
-   * A user is considered privileged if they have 'bypass node access' permission
-   * or if they are a member of the given group.
+   * A user is considered privileged if they have 'bypass node access'
+   * permission or if they are a member of the given group.
    *
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The account to check.
@@ -219,6 +219,13 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
         ->addCacheContexts(['url.site', 'languages:language_interface']);
     }
 
+    // Block access to unpublished country hostnames for non-privileged users.
+    if (!$is_admin_route && !$current_group->isPublished() && !$this->isPrivilegedUser($account, $current_group)) {
+      return AccessResult::forbidden('Cannot access content on unpublished country hostname')
+        ->addCacheableDependency($current_group)
+        ->addCacheContexts(['url.site', 'user.permissions']);
+    }
+
     // Handle Country group nodes.
     if ($this->groupTypeManager->isGroup($node->getEntityTypeId(), $node->bundle())) {
       return $this->checkGroupNodeAccess($node, $current_group, $account, $is_admin_route);
@@ -262,7 +269,8 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
   protected function checkGroupNodeAccess(NodeInterface $node, NodeInterface $current_group, AccountInterface $account, bool $is_admin_route): AccessResultInterface {
     // Viewing a different Country than the current context.
     if ($node->id() !== $current_group->id()) {
-      // On admin routes, allow access (they already have permission to be there).
+      // On admin routes, allow access (they already have permission to be
+      // there).
       if ($is_admin_route) {
         return AccessResult::allowed()
           ->addCacheableDependency($node)
@@ -284,8 +292,17 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
         ->addCacheContexts(['url.site']);
     }
 
-    // Show warning if viewing unpublished country (we're staying on this hostname).
+    // Show warning if viewing unpublished country.
     if (!$is_admin_route && !$current_group->isPublished()) {
+      // Block access for non-privileged users.
+      if (!$this->isPrivilegedUser($account, $current_group)) {
+        return AccessResult::forbidden('Cannot access unpublished country')
+          ->addCacheableDependency($node)
+          ->addCacheableDependency($current_group)
+          ->addCacheContexts(['url.site', 'user.permissions']);
+      }
+
+      // Show warning for privileged users.
       $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
         '@title' => $current_group->label(),
       ]));
@@ -382,7 +399,8 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
         ->addCacheContexts(['url.site']);
     }
 
-    // On node-specific routes, redirect to correct hostname before access checks.
+    // On node-specific routes, redirect to correct hostname before access
+    // checks.
     $route_name = $request ? $request->attributes->get('_route') : NULL;
     if ($route_name && in_array($route_name, self::NODE_ROUTES)) {
       $this->redirectToCorrectHostname($node, $current_group);
@@ -414,7 +432,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
         ->addCacheContexts(['url.site', 'user.permissions']);
     }
 
-    // Show warning if viewing content on unpublished country (we're staying on this hostname).
+    // Show warning if viewing content on unpublished country.
     if (!$is_admin_route && !$current_group->isPublished()) {
       $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
         '@title' => $current_group->label(),
