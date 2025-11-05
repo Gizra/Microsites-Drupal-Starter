@@ -27,7 +27,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class ParagraphCountryInfo extends EntityViewBuilderPluginAbstract {
 
   use CountryThemeTrait;
-  use LinkThemeTrait;
   use ProcessedTextBuilderTrait;
 
   /**
@@ -92,7 +91,6 @@ class ParagraphCountryInfo extends EntityViewBuilderPluginAbstract {
       $elements = $this->wrapContainerWide($elements);
 
       $cache = CacheableMetadata::createFromRenderArray($elements);
-      $cache->addCacheableDependency($current_group);
       $cache->addCacheContexts(['url.site']);
       $cache->applyTo($elements);
 

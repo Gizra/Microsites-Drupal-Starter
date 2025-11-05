@@ -230,7 +230,6 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
         ->addCacheContexts(['url.site', 'languages:language_interface']);
     }
 
-
     if (!$current_group) {
       // No group context (main site hostname), allow access to all content.
       return AccessResult::allowed()
@@ -278,9 +277,9 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     // Get all groups this content belongs to.
     $content_groups = $this->membershipManager->getGroups($node);
 
-    // Check if privileged users need to be redirected to correct hostname BEFORE
-    // denying access. This allows editors to work on unpublished content but on
-    // the right domain.
+    // Check if privileged users need to be redirected to correct hostname
+    // before denying access. This allows editors to work on unpublished content
+    // but on the right domain.
     if ($account->hasPermission('bypass node access') || $account->hasPermission('administer nodes')) {
       $route_name = $request ? $request->attributes->get('_route') : NULL;
       if ($route_name && in_array($route_name, self::NODE_ROUTES)) {

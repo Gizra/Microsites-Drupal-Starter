@@ -82,7 +82,8 @@ class Country extends OgRouteGroupResolverBase {
       ->range(0, 1);
 
     // Only filter by published status if user doesn't have permission to view
-    // unpublished content. This allows editors to work on unpublished countries.
+    // unpublished content. This allows editors to work on unpublished
+    // countries.
     if (!$this->currentUser->hasPermission('bypass node access') && !$this->currentUser->hasPermission('administer nodes')) {
       $query->condition('status', NodeInterface::PUBLISHED);
     }
