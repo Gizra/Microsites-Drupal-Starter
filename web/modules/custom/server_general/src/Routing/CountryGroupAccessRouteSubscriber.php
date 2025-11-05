@@ -6,9 +6,11 @@ namespace Drupal\server_general\Routing;
 
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Routing\RouteSubscriberBase;
 use Drupal\Core\Routing\TrustedRedirectResponse;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\node\NodeInterface;
 use Drupal\og\GroupTypeManagerInterface;
 use Drupal\og\MembershipManagerInterface;
@@ -24,6 +26,8 @@ use Symfony\Component\Routing\RouteCollection;
  * on the correct hostname based on OG group context.
  */
 final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
+
+  use StringTranslationTrait;
 
   /**
    * Node routes that require group access checks and redirects.
@@ -54,6 +58,8 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    *   The OG group type manager service.
    * @param \Symfony\Component\HttpFoundation\RequestStack $requestStack
    *   The request stack service.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The messenger service.
    */
   public function __construct(
     protected readonly OgContextInterface $ogContext,
@@ -61,6 +67,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     protected readonly MembershipManagerInterface $membershipManager,
     protected readonly GroupTypeManagerInterface $groupTypeManager,
     protected readonly RequestStack $requestStack,
+    protected readonly MessengerInterface $messenger,
   ) {}
 
   /**
@@ -183,6 +190,10 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       // Allow editors to work on unpublished languages before they're enabled
       // for the country. This allows content creation and translation work.
       if ($account->hasPermission('bypass node access') || $account->hasPermission('administer nodes')) {
+        $language = $node->language();
+        $this->messenger->addWarning($this->t('You are viewing content in a language (@language) that is not enabled for this country.', [
+          '@language' => $language->getName(),
+        ]));
         return NULL;
       }
 
@@ -253,6 +264,13 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
           ->addCacheableDependency($current_group)
           ->addCacheContexts(['url.site']);
       }
+      // Show warning if viewing unpublished country.
+      if (!$node->isPublished()) {
+        $this->messenger->addWarning($this->t('You are viewing an unpublished country: @title', [
+          '@title' => $node->label(),
+        ]));
+      }
+
       // Group matches current context, check language access.
       $language_access = $this->checkLanguageAccess($node, $current_group, $account);
       if ($language_access) {
@@ -293,6 +311,13 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       return AccessResult::forbidden('Content does not belong to the current group context')
         ->addCacheableDependency($node)
         ->addCacheContexts(['url.site']);
+    }
+
+    // Show warning if viewing unpublished content.
+    if (!$node->isPublished()) {
+      $this->messenger->addWarning($this->t('You are viewing unpublished content: @title', [
+        '@title' => $node->label(),
+      ]));
     }
 
     // Check if the node's language is allowed for this Country group.
