@@ -12,7 +12,6 @@ use Drupal\pluggable_entity_view_builder\EntityViewBuilderPluginAbstract;
 use Drupal\server_general\ProcessedTextBuilderTrait;
 use Drupal\server_general\ThemeTrait\CountryThemeTrait;
 use Drupal\server_general\ThemeTrait\Enum\FontSizeEnum;
-use Drupal\server_general\ThemeTrait\LinkThemeTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**

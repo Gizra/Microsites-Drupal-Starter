@@ -162,53 +162,6 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
   }
 
   /**
-   * Checks if a node's language is allowed for the given Country group.
-   *
-   * @param \Drupal\node\NodeInterface $node
-   *   The node to check.
-   * @param \Drupal\node\NodeInterface $country_group
-   *   The Country group entity.
-   * @param \Drupal\Core\Session\AccountInterface $account
-   *   The account to check access for.
-   *
-   * @return \Drupal\Core\Access\AccessResultInterface|null
-   *   Returns forbidden if language is not allowed, null if check should be
-   *   skipped or language is allowed.
-   */
-  protected function checkLanguageAccess(NodeInterface $node, NodeInterface $country_group, AccountInterface $account): ?AccessResultInterface {
-    $allowed_languages = [];
-    foreach ($country_group->get('field_languages') as $item) {
-      $allowed_languages[] = $item->value;
-    }
-
-    if (empty($allowed_languages)) {
-      return NULL;
-    }
-
-    $node_langcode = $node->language()->getId();
-
-    // Language is allowed for this country.
-    if (in_array($node_langcode, $allowed_languages)) {
-      return NULL;
-    }
-
-    // Language is not enabled but privileged users can still access.
-    if ($account->hasPermission('bypass node access') || $account->hasPermission('administer nodes')) {
-      $language = $node->language();
-      $this->messenger->addWarning($this->t('You are viewing content in a language (@language) that is not enabled for this country.', [
-        '@language' => $language->getName(),
-      ]));
-      return NULL;
-    }
-
-    // Language is not available for regular users.
-    return AccessResult::forbidden('This language is not available for the current country context')
-      ->addCacheableDependency($node)
-      ->addCacheableDependency($country_group)
-      ->addCacheContexts(['url.site', 'languages:language_interface', 'user.permissions']);
-  }
-
-  /**
    * Checks if the current node can be accessed based on hostname group context.
    *
    * @param \Drupal\Core\Session\AccountInterface $account
@@ -294,6 +247,53 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       ->addCacheableDependency($node)
       ->addCacheableDependency($current_group)
       ->addCacheContexts(['url.site', 'languages:language_interface']);
+  }
+
+  /**
+   * Checks if a node's language is allowed for the given Country group.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node to check.
+   * @param \Drupal\node\NodeInterface $country_group
+   *   The Country group entity.
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The account to check access for.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface|null
+   *   Returns forbidden if language is not allowed, null if check should be
+   *   skipped or language is allowed.
+   */
+  protected function checkLanguageAccess(NodeInterface $node, NodeInterface $country_group, AccountInterface $account): ?AccessResultInterface {
+    $allowed_languages = [];
+    foreach ($country_group->get('field_languages') as $item) {
+      $allowed_languages[] = $item->value;
+    }
+
+    if (empty($allowed_languages)) {
+      return NULL;
+    }
+
+    $node_langcode = $node->language()->getId();
+
+    // Language is allowed for this country.
+    if (in_array($node_langcode, $allowed_languages)) {
+      return NULL;
+    }
+
+    // Language is not enabled but privileged users can still access.
+    if ($account->hasPermission('bypass node access') || $account->hasPermission('administer nodes')) {
+      $language = $node->language();
+      $this->messenger->addWarning($this->t('You are viewing content in a language (@language) that is not enabled for this country.', [
+        '@language' => $language->getName(),
+      ]));
+      return NULL;
+    }
+
+    // Language is not available for regular users.
+    return AccessResult::forbidden('This language is not available for the current country context')
+      ->addCacheableDependency($node)
+      ->addCacheableDependency($country_group)
+      ->addCacheContexts(['url.site', 'languages:language_interface', 'user.permissions']);
   }
 
   /**
