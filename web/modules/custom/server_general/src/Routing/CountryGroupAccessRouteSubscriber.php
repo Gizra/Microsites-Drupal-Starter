@@ -238,43 +238,82 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
         ->addCacheContexts(['url.site', 'languages:language_interface']);
     }
 
+    // Show warning if viewing content on an unpublished country's hostname.
+    if (!$current_group->isPublished()) {
+      $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
+        '@title' => $current_group->label(),
+      ]));
+    }
+
     // Handle Country group nodes.
     if ($this->groupTypeManager->isGroup($node->getEntityTypeId(), $node->bundle())) {
-      // Viewing a different Country than the current context.
-      if ($node->id() !== $current_group->id()) {
-        return AccessResult::forbidden('Cannot view this group from the current hostname')
-          ->addCacheableDependency($node)
-          ->addCacheableDependency($current_group)
-          ->addCacheContexts(['url.site']);
-      }
+      return $this->checkGroupNodeAccess($node, $current_group, $account);
+    }
 
-      // Show warning for unpublished country.
-      if (!$node->isPublished()) {
-        $this->messenger->addWarning($this->t('You are viewing an unpublished country: @title', [
-          '@title' => $node->label(),
-        ]));
-      }
-
-      // Check language access.
-      $language_access = $this->checkLanguageAccess($node, $current_group, $account);
-      if ($language_access) {
-        return $language_access;
-      }
-
-      return AccessResult::allowed()
-        ->addCacheableDependency($node)
-        ->addCacheableDependency($current_group)
-        ->addCacheContexts(['url.site', 'languages:language_interface']);
+    // Handle group content nodes (e.g., News articles).
+    if ($this->groupAudienceHelper->hasGroupAudienceField($node->getEntityTypeId(), $node->bundle())) {
+      return $this->checkGroupContentAccess($node, $current_group, $account, $request, $is_privileged);
     }
 
     // Not group content, allow access.
-    if (!$this->groupAudienceHelper->hasGroupAudienceField($node->getEntityTypeId(), $node->bundle())) {
-      return AccessResult::allowed()
+    return AccessResult::allowed()
+      ->addCacheableDependency($node)
+      ->addCacheableDependency($current_group)
+      ->addCacheContexts(['url.site', 'languages:language_interface']);
+  }
+
+  /**
+   * Checks access for Country group nodes.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The Country node being accessed.
+   * @param \Drupal\node\NodeInterface $current_group
+   *   The current group context.
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The account to check access for.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
+   */
+  protected function checkGroupNodeAccess(NodeInterface $node, NodeInterface $current_group, AccountInterface $account): AccessResultInterface {
+    // Viewing a different Country than the current context.
+    if ($node->id() !== $current_group->id()) {
+      return AccessResult::forbidden('Cannot view this group from the current hostname')
         ->addCacheableDependency($node)
-        ->addCacheContexts(['url.site', 'languages:language_interface']);
+        ->addCacheableDependency($current_group)
+        ->addCacheContexts(['url.site']);
     }
 
-    // Handle group content (e.g., News articles).
+    // Check language access.
+    $language_access = $this->checkLanguageAccess($node, $current_group, $account);
+    if ($language_access) {
+      return $language_access;
+    }
+
+    return AccessResult::allowed()
+      ->addCacheableDependency($node)
+      ->addCacheableDependency($current_group)
+      ->addCacheContexts(['url.site', 'languages:language_interface']);
+  }
+
+  /**
+   * Checks access for group content nodes.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The group content node being accessed.
+   * @param \Drupal\node\NodeInterface $current_group
+   *   The current group context.
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The account to check access for.
+   * @param \Symfony\Component\HttpFoundation\Request|null $request
+   *   The current request.
+   * @param bool $is_privileged
+   *   Whether the user has privileged access.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
+   */
+  protected function checkGroupContentAccess(NodeInterface $node, NodeInterface $current_group, AccountInterface $account, $request, bool $is_privileged): AccessResultInterface {
     $content_groups = $this->membershipManager->getGroups($node);
 
     // Redirect privileged users to correct hostname before access checks.
