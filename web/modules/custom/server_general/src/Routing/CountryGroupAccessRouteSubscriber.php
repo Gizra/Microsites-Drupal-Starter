@@ -161,12 +161,14 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    *   The node to check.
    * @param \Drupal\node\NodeInterface $country_group
    *   The Country group entity.
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The account to check access for.
    *
    * @return \Drupal\Core\Access\AccessResultInterface|null
    *   Returns forbidden if language is not allowed, null if check should be
    *   skipped or language is allowed.
    */
-  protected function checkLanguageAccess(NodeInterface $node, NodeInterface $country_group): ?AccessResultInterface {
+  protected function checkLanguageAccess(NodeInterface $node, NodeInterface $country_group, AccountInterface $account): ?AccessResultInterface {
     $allowed_languages = [];
     foreach ($country_group->get('field_languages') as $item) {
       $allowed_languages[] = $item->value;
@@ -178,10 +180,16 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
 
     $node_langcode = $node->language()->getId();
     if (!in_array($node_langcode, $allowed_languages)) {
+      // Allow editors to work on unpublished languages before they're enabled
+      // for the country. This allows content creation and translation work.
+      if ($account->hasPermission('bypass node access') || $account->hasPermission('administer nodes')) {
+        return NULL;
+      }
+
       return AccessResult::forbidden('This language is not available for the current country context')
         ->addCacheableDependency($node)
         ->addCacheableDependency($country_group)
-        ->addCacheContexts(['url.site', 'languages:language_interface']);
+        ->addCacheContexts(['url.site', 'languages:language_interface', 'user.permissions']);
     }
 
     return NULL;
@@ -246,7 +254,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
           ->addCacheContexts(['url.site']);
       }
       // Group matches current context, check language access.
-      $language_access = $this->checkLanguageAccess($node, $current_group);
+      $language_access = $this->checkLanguageAccess($node, $current_group, $account);
       if ($language_access) {
         return $language_access;
       }
@@ -288,7 +296,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     }
 
     // Check if the node's language is allowed for this Country group.
-    $language_access = $this->checkLanguageAccess($node, $current_group);
+    $language_access = $this->checkLanguageAccess($node, $current_group, $account);
     if ($language_access) {
       return $language_access;
     }
