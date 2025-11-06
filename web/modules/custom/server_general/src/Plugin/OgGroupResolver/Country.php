@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\server_general\Plugin\OgGroupResolver;
 
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\node\NodeInterface;
 use Drupal\og\Attribute\OgGroupResolver;
 use Drupal\og\OgResolvedGroupCollectionInterface;
 use Drupal\og\OgRouteGroupResolverBase;
@@ -33,11 +33,19 @@ class Country extends OgRouteGroupResolverBase {
   protected RequestStack $requestStack;
 
   /**
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountProxyInterface
+   */
+  protected AccountProxyInterface $currentUser;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $plugin = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $plugin->requestStack = $container->get('request_stack');
+    $plugin->currentUser = $container->get('current_user');
 
     return $plugin;
   }
@@ -68,10 +76,18 @@ class Country extends OgRouteGroupResolverBase {
     // Query Country nodes that have the current hostname in field_hostnames.
     $query = $storage->getQuery()
       ->condition('type', 'country')
-      ->condition('status', NodeInterface::PUBLISHED)
       ->condition('field_hostnames', $hostname)
+      // We don't filter by published status, this allows editors to work on
+      // unpublished countries.
+      // For non-admin users, the access check will ensure they can only see
+      // published countries they have access to.
+      // @see \Drupal\server_general\Routing\CountryGroupAccessRouteSubscriber::access
       ->accessCheck(TRUE)
       ->range(0, 1);
+
+    if (!$this->currentUser->hasPermission('bypass node access')) {
+      // $query->condition('status', NodeInterface::PUBLISHED);
+    }
 
     $nids = $query->execute();
 

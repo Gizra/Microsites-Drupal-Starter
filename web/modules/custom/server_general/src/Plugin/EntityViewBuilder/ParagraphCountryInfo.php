@@ -12,7 +12,6 @@ use Drupal\pluggable_entity_view_builder\EntityViewBuilderPluginAbstract;
 use Drupal\server_general\ProcessedTextBuilderTrait;
 use Drupal\server_general\ThemeTrait\CountryThemeTrait;
 use Drupal\server_general\ThemeTrait\Enum\FontSizeEnum;
-use Drupal\server_general\ThemeTrait\LinkThemeTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -27,7 +26,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class ParagraphCountryInfo extends EntityViewBuilderPluginAbstract {
 
   use CountryThemeTrait;
-  use LinkThemeTrait;
   use ProcessedTextBuilderTrait;
 
   /**
@@ -79,9 +77,10 @@ class ParagraphCountryInfo extends EntityViewBuilderPluginAbstract {
       if (!empty($country_links)) {
         $links_element = $this->wrapContainerVerticalSpacing($country_links);
 
-        // Add cache tags for all country nodes.
+        // Add cache tags for all country nodes and user permissions context.
         $cache = CacheableMetadata::createFromRenderArray($links_element);
         $cache->addCacheTags(['node_list:country']);
+        $cache->addCacheContexts(['user.permissions']);
         $cache->applyTo($links_element);
 
         $elements[] = $links_element;
@@ -91,7 +90,6 @@ class ParagraphCountryInfo extends EntityViewBuilderPluginAbstract {
       $elements = $this->wrapContainerWide($elements);
 
       $cache = CacheableMetadata::createFromRenderArray($elements);
-      $cache->addCacheableDependency($current_group);
       $cache->addCacheContexts(['url.site']);
       $cache->applyTo($elements);
 
@@ -127,7 +125,8 @@ class ParagraphCountryInfo extends EntityViewBuilderPluginAbstract {
    * Get all country URLs.
    *
    * Returns an array of country URLs, using the first hostname from
-   * for each published Country node.
+   * for each published Country node. Administrators also see unpublished
+   * countries with an "(Unpublished)" label.
    *
    * @return array
    *   Array of render arrays for country links, keyed by country title.
@@ -135,12 +134,17 @@ class ParagraphCountryInfo extends EntityViewBuilderPluginAbstract {
   protected function getAllCountryUrls(): array {
     $storage = $this->entityTypeManager->getStorage('node');
 
-    // Query all published Country nodes.
+    // Query all Country nodes.
     $query = $storage->getQuery()
       ->condition('type', 'country')
-      ->condition('status', NodeInterface::PUBLISHED)
       ->accessCheck(TRUE)
       ->sort('title', 'ASC');
+
+    // Only filter by published status if user doesn't have permission to view
+    // unpublished content.
+    if (!$this->currentUser->hasPermission('bypass node access') && !$this->currentUser->hasPermission('administer nodes')) {
+      $query->condition('status', NodeInterface::PUBLISHED);
+    }
 
     $nids = $query->execute();
 
@@ -170,8 +174,14 @@ class ParagraphCountryInfo extends EntityViewBuilderPluginAbstract {
       // Build URL using the hostname.
       $url = Url::fromUri('https://' . $hostname);
 
+      // Build link label, add "(Unpublished)" suffix for unpublished countries.
+      $label = $country->label();
+      if (!$country->isPublished()) {
+        $label .= ' ' . $this->t('(Unpublished)');
+      }
+
       // Build link element.
-      $country_links[] = $this->buildLink($country->label(), $url);
+      $country_links[] = $this->buildLink($label, $url);
     }
 
     return $country_links;
