@@ -60,7 +60,21 @@ class Country extends OgRouteGroupResolverBase {
       return;
     }
 
-    $hostname = $request->getHost();
+    // Allow fake_domain query parameter for testing hostname-based resolution
+    // without DNS configuration.
+    $hostname = NULL;
+
+    if (getenv('IS_DDEV_PROJECT') == 'true') {
+      $fake_domain = $request->query->get('fake_domain');
+      if ($fake_domain) {
+        $hostname = $fake_domain;
+      }
+    }
+
+    // Fall back to actual hostname if fake_domain not provided.
+    if (!$hostname) {
+      $hostname = $request->getHost();
+    }
 
     // Validate hostname format.
     if (!filter_var($hostname, FILTER_VALIDATE_DOMAIN)) {
@@ -77,12 +91,9 @@ class Country extends OgRouteGroupResolverBase {
     $query = $storage->getQuery()
       ->condition('type', 'country')
       ->condition('field_hostnames', $hostname)
-      // We don't filter by published status, this allows editors to work on
-      // unpublished countries.
-      // For non-admin users, the access check will ensure they can only see
-      // published countries they have access to.
-      // @see \Drupal\server_general\Routing\CountryGroupAccessRouteSubscriber::access
-      ->accessCheck(TRUE)
+      // Bypass access checks so unpublished countries can still set the
+      // context; access restrictions are enforced later.
+      ->accessCheck(FALSE)
       ->range(0, 1);
 
     if (!$this->currentUser->hasPermission('bypass node access')) {

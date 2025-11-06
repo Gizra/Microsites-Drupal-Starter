@@ -138,7 +138,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     // Check if the node is group content.
     elseif ($this->groupAudienceHelper->hasGroupAudienceField($node->getEntityTypeId(), $node->bundle())) {
       $content_groups = $this->membershipManager->getGroups($node);
-      if (!isset($content_groups['node']) || empty($content_groups['node'])) {
+      if (empty($content_groups['node'])) {
         return;
       }
 
@@ -174,6 +174,13 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     // Validate hostname before redirect to prevent open redirects.
     if (!filter_var($correct_hostname, FILTER_VALIDATE_DOMAIN)) {
       \Drupal::logger('server_general')->warning('Invalid redirect hostname: @hostname', ['@hostname' => $correct_hostname]);
+      return;
+    }
+
+    $fake_domain = $request->query->get('fake_domain');
+
+    if (getenv('IS_DDEV_PROJECT') == 'true' || $fake_domain) {
+      // Don't redirect if we're using a fake_domain for testing.
       return;
     }
 

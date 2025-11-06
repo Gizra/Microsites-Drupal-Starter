@@ -28,7 +28,7 @@ abstract class ServerGeneralTestBase extends ExistingSiteBase {
   /**
    * Creates a snapshot of the virtual browser for debugging purposes.
    */
-  public function createHtmlSnapshot(): void {
+  public function createHtmlSnapshot(): string {
     if (!file_exists(TestConfiguration::DEBUG_DIRECTORY)) {
       mkdir(TestConfiguration::DEBUG_DIRECTORY);
     }
@@ -53,6 +53,7 @@ abstract class ServerGeneralTestBase extends ExistingSiteBase {
     $filename = TestConfiguration::DEBUG_DIRECTORY . '/' . $caller . '_' . $timestamp . '.html';
     file_put_contents($filename, $this->getCurrentPage()->getOuterHtml());
     \Drupal::logger('server_general')->notice('HTML snapshot created: ' . str_replace('../', '', $filename));
+    return $filename;
   }
 
 }
