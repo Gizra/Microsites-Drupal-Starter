@@ -60,21 +60,7 @@ class Country extends OgRouteGroupResolverBase {
       return;
     }
 
-    // Allow fake_domain query parameter for testing hostname-based resolution
-    // without DNS configuration.
-    $hostname = NULL;
-
-    if (getenv('IS_DDEV_PROJECT') == 'true') {
-      $fake_domain = $request->query->get('fake_domain');
-      if ($fake_domain) {
-        $hostname = $fake_domain;
-      }
-    }
-
-    // Fall back to actual hostname if fake_domain not provided.
-    if (!$hostname) {
-      $hostname = $request->getHost();
-    }
+    $hostname = $request->getHost();
 
     // Validate hostname format.
     if (!filter_var($hostname, FILTER_VALIDATE_DOMAIN)) {

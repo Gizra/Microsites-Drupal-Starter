@@ -10,6 +10,10 @@ additional_hostnames:
     - iq.microsites-drupal-starter
     - es.microsites-drupal-starter
     - us.microsites-drupal-starter
+    - tc.microsites-drupal-starter
+    - eo.microsites-drupal-starter
+    - uc.microsites-drupal-starter
+    - pc.microsites-drupal-starter
 additional_fqdns: []
 database:
     type: mariadb

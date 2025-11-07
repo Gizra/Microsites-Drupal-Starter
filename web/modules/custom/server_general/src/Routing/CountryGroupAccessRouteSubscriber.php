@@ -177,13 +177,6 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       return;
     }
 
-    $fake_domain = $request->query->get('fake_domain');
-
-    if (getenv('IS_DDEV_PROJECT') == 'true' || $fake_domain) {
-      // Don't redirect if we're using a fake_domain for testing.
-      return;
-    }
-
     // Perform redirect.
     $redirect_url = $request->getScheme() . '://' . $correct_hostname;
     if ($request->getPort() && !in_array($request->getPort(), [80, 443])) {
