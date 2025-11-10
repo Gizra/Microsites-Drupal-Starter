@@ -17,8 +17,8 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
 
   private const UNPUBLISHED_COUNTRY_HOST = 'unpublished-country.microsites-drupal-starter.ddev.site';
   private const PUBLISHED_COUNTRY_HOST = 'published-country.microsites-drupal-starter.ddev.site';
-  private const LANGUAGE_COUNTRY_HOST = 'es.microsites-drupal-starter.ddev.site';
-  private const GROUP_COUNTRY_HOST = 'iq.microsites-drupal-starter.ddev.site';
+  private const LANGUAGE_COUNTRY_HOST = 'language-country.microsites-drupal-starter.ddev.site';
+  private const GROUP_COUNTRY_HOST = 'group-country.microsites-drupal-starter.ddev.site';
 
   /**
    * The unpublished country fixture.

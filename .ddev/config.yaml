@@ -14,6 +14,8 @@ additional_hostnames:
     # Domains used in PHPunit tests.
     - unpublished-country.microsites-drupal-starter
     - published-country.microsites-drupal-starter
+    - language-country.microsites-drupal-starter
+    - group-country.microsites-drupal-starter
 additional_fqdns: []
 database:
     type: mariadb
