@@ -68,9 +68,8 @@ class Country extends OgRouteGroupResolverBase {
     // Query Country nodes that have the current hostname in field_hostnames.
     $query = $storage->getQuery()
       ->condition('type', 'country')
-      ->condition('status', NodeInterface::PUBLISHED)
       ->condition('field_hostnames', $hostname)
-      ->accessCheck(TRUE)
+      ->accessCheck(FALSE)
       ->range(0, 1);
 
     $nids = $query->execute();

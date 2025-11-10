@@ -10,8 +10,7 @@
      number of tests build up over time in the project. -->
 <phpunit bootstrap=".bootstrap-fast.php" processIsolation="true" testdox="true">
   <php>
-    <env name="SIMPLETEST_BASE_URL" value="http://microsites-drupal-starter.ddev.site:8880"/>
-    <env name="DTT_BASE_URL" value="http://microsites-drupal-starter.ddev.site:8880"/>
+    <env name="DTT_BASE_URL" value="httpd://microsites-drupal-starter.ddev.site:4443"/>
     <env name="DTT_API_URL" value="http://localhost:9222"/>
     <env name="BROWSERTEST_OUTPUT_DIRECTORY" value=""/>
     <!-- To disable deprecation testing completely uncomment the next line. -->

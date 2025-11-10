@@ -27,8 +27,6 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
       'field_hostnames' => ['tc.microsites-drupal-starter.ddev.site'],
       'field_languages' => ['en'],
     ]);
-    // @todo: Why is this needed?
-    $country->save();
 
     // Anonymous user should get forbidden accessing the country node.
     $this->visitCountry($country, 'tc');
@@ -48,13 +46,14 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
       'field_hostnames' => ['tc.microsites-drupal-starter.ddev.site'],
       'field_languages' => ['en'],
     ]);
-    $country->save();
+
 
     // User with bypass node access should be able to access.
     $admin = $this->createUser([], NULL, TRUE);
     $this->drupalLogin($admin);
 
     $this->visitCountry($country, 'tc');
+
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
     // Should show warning.
     $this->assertSession()->pageTextContains('You are viewing content on an unpublished country');
@@ -396,7 +395,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
       default => 'microsites-drupal-starter.ddev.site',
     };
 
-    return sprintf('http://%s:8880', $host);
+    return sprintf('https://%s:4443', $host);
   }
 
 }
