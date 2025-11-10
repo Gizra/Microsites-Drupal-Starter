@@ -127,7 +127,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    */
   public function testUnpublishedCountryAccessNonMember(): void {
     $user = $this->createUser();
-    $this->markEntityForCleanup($user);
+    
     $this->drupalLogin($user);
 
     $this->visitCountry($this->unpublishedCountry);
@@ -142,7 +142,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
 
     $user = $this->createUser();
-    $this->markEntityForCleanup($user);
+    
     $this->drupalLogin($user);
     $this->visitCountry($this->publishedCountry);
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
@@ -166,7 +166,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
 
     $user = $this->createUser();
-    $this->markEntityForCleanup($user);
+    
     $this->drupalLogin($user);
     $this->visitTranslationOnCountry($country_es, $country);
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
@@ -205,7 +205,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
 
     $user = $this->createUser();
-    $this->markEntityForCleanup($user);
+    
     $this->drupalLogin($user);
     $this->visitGroupContentOnCountry($news, $this->unpublishedCountry);
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
