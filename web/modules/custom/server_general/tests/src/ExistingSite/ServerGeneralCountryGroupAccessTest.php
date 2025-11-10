@@ -17,6 +17,8 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
 
   private const UNPUBLISHED_COUNTRY_HOST = 'unpublished-country.microsites-drupal-starter.ddev.site';
   private const PUBLISHED_COUNTRY_HOST = 'published-country.microsites-drupal-starter.ddev.site';
+  private const LANGUAGE_COUNTRY_HOST = 'es.microsites-drupal-starter.ddev.site';
+  private const GROUP_COUNTRY_HOST = 'iq.microsites-drupal-starter.ddev.site';
 
   /**
    * The unpublished country fixture.
@@ -120,284 +122,169 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $access_handler = \Drupal::entityTypeManager()->getAccessControlHandler('node');
     $this->assertTrue($access_handler->access($this->unpublishedCountry, 'view', $member));
   }
-//
-//  /**
-//   * Test that non-members cannot access unpublished country.
-//   */
-//  public function testUnpublishedCountryAccessNonMember(): void {
-//    // Create an unpublished Country node.
-//    $country = $this->createNode([
-//      'type' => 'country',
-//      'title' => 'Test Unpublished Country',
-//      'status' => NodeInterface::NOT_PUBLISHED,
-//      'field_country_code' => 'tc',
-//      'field_hostnames' => [$this->getHostname('tc')],
-//      'field_languages' => ['en'],
-//    ]);
-//
-//    // Regular user without group membership should not have access.
-//    $user = $this->createUser();
-//    $this->drupalLogin($user);
-//
-//    $this->drupalGet($country->toUrl());
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
-//  }
-//
-//  /**
-//   * Test that all users can access published country.
-//   */
-//  public function testPublishedCountryAccess(): void {
-//    // Create a published Country node.
-//    $country = $this->createNode([
-//      'type' => 'country',
-//      'title' => 'Test Published Country',
-//      'status' => NodeInterface::PUBLISHED,
-//      'field_country_code' => 'tc',
-//      'field_hostnames' => [$this->getHostname('tc')],
-//      'field_languages' => ['en'],
-//    ]);
-//
-//    // Anonymous user should have access.
-//    $this->drupalGet($country->toUrl());
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-//
-//    // Regular user should have access.
-//    $user = $this->createUser();
-//    $this->drupalLogin($user);
-//    $this->drupalGet($country->toUrl());
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-//    // Should NOT show warning for published country.
-//    $this->assertSession()->pageTextNotContains('You are viewing content on an unpublished country');
-//  }
-//
-//  /**
-//   * Test language restrictions for non-privileged users.
-//   */
-//  public function testLanguageAccessRestrictions(): void {
-//    // Create a Country that only allows English.
-//    $country = $this->createNode([
-//      'type' => 'country',
-//      'title' => 'English Only Country',
-//      'status' => NodeInterface::PUBLISHED,
-//      'field_country_code' => 'eo',
-//      'field_hostnames' => [$this->getHostname('eo')],
-//      'field_languages' => ['en'],
-//    ]);
-//
-//    // Add Spanish translation to the country.
-//    $country_es = $country->addTranslation('es', $country->toArray());
-//    $country_es->setTitle('País solo inglés');
-//    $country_es->save();
-//
-//    // Anonymous user trying to access Spanish version should be denied.
-//    $this->drupalGet($country_es->toUrl());
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
-//
-//    // Regular user should also be denied.
-//    $user = $this->createUser();
-//    $this->drupalLogin($user);
-//    $this->drupalGet($country_es->toUrl());
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
-//  }
-//
-//  /**
-//   * Test that privileged users can access non-enabled languages with warning.
-//   */
-//  public function testLanguageAccessPrivileged(): void {
-//    // Create a Country that only allows English.
-//    $country = $this->createNode([
-//      'type' => 'country',
-//      'title' => 'English Only Country',
-//      'status' => NodeInterface::PUBLISHED,
-//      'field_country_code' => 'eo',
-//      'field_hostnames' => [$this->getHostname('eo')],
-//      'field_languages' => ['en'],
-//    ]);
-//
-//    // Add Spanish translation.
-//    $country_es = $country->addTranslation('es', $country->toArray());
-//    $country_es->setTitle('País solo inglés');
-//    $country_es->save();
-//
-//    // Admin user should be able to access with warning.
-//    $admin = $this->createUser([], NULL, TRUE);
-//    $this->drupalLogin($admin);
-//
-//    $this->drupalGet($country_es->toUrl());
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-//    $this->assertSession()->pageTextContains('You are viewing content in a language');
-//    $this->assertSession()->pageTextContains('that is not enabled for this country');
-//  }
-//
-//  /**
-//   * Test group content access on unpublished country.
-//   */
-//  public function testGroupContentOnUnpublishedCountry(): void {
-//    // Create an unpublished Country.
-//    $country = $this->createNode([
-//      'type' => 'country',
-//      'title' => 'Unpublished Country',
-//      'status' => NodeInterface::NOT_PUBLISHED,
-//      'field_country_code' => 'uc',
-//      'field_hostnames' => [$this->getHostname('uc')],
-//      'field_languages' => ['en'],
-//    ]);
-//
-//    // Create a News article belonging to this country.
-//    $news = $this->createNode([
-//      'type' => 'news',
-//      'title' => 'Test News',
-//      'status' => NodeInterface::PUBLISHED,
-//      'og_audience' => ['target_id' => $country->id()],
-//    ]);
-//    $this->markEntityForCleanup($news);
-//
-//    // Anonymous user should not be able to access news on unpublished country.
-//    $this->drupalGet($news->toUrl());
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
-//
-//    // Regular user should not be able to access.
-//    $user = $this->createUser();
-//    $this->drupalLogin($user);
-//    $this->drupalGet($news->toUrl());
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
-//  }
-//
-//  /**
-//   * Test group content access on unpublished country for privileged users.
-//   */
-//  public function testGroupContentOnUnpublishedCountryPrivileged(): void {
-//    // Create an unpublished Country.
-//    $country = $this->createNode([
-//      'type' => 'country',
-//      'title' => 'Unpublished Country',
-//      'status' => NodeInterface::NOT_PUBLISHED,
-//      'field_country_code' => 'uc',
-//      'field_hostnames' => [$this->getHostname('uc')],
-//      'field_languages' => ['en'],
-//    ]);
-//
-//    // Create a News article belonging to this country.
-//    $news = $this->createNode([
-//      'type' => 'news',
-//      'title' => 'Test News',
-//      'status' => NodeInterface::PUBLISHED,
-//      'og_audience' => ['target_id' => $country->id()],
-//    ]);
-//    $this->markEntityForCleanup($news);
-//
-//    // Admin should be able to access with warning.
-//    $admin = $this->createUser([], NULL, TRUE);
-//    $this->drupalLogin($admin);
-//
-//    $this->drupalGet($news->toUrl());
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-//    $this->assertSession()->pageTextContains('You are viewing content on an unpublished country');
-//  }
-//
-//  /**
-//   * Test unpublished group content on published country.
-//   */
-//  public function testUnpublishedGroupContent(): void {
-//    // Create a published Country.
-//    $country = $this->createNode([
-//      'type' => 'country',
-//      'title' => 'Published Country',
-//      'status' => NodeInterface::PUBLISHED,
-//      'field_country_code' => 'pc',
-//      'field_hostnames' => [$this->getHostname('pc')],
-//      'field_languages' => ['en'],
-//    ]);
-//
-//    // Create an unpublished News article.
-//    $news = $this->createNode([
-//      'type' => 'news',
-//      'title' => 'Unpublished News',
-//      'status' => NodeInterface::NOT_PUBLISHED,
-//      'og_audience' => ['target_id' => $country->id()],
-//    ]);
-//    $this->markEntityForCleanup($news);
-//
-//    // Anonymous user should not have access.
-//    $this->drupalGet($news->toUrl());
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
-//
-//    // Admin should have access with warning.
-//    $admin = $this->createUser([], NULL, TRUE);
-//    $this->drupalLogin($admin);
-//
-//    $this->drupalGet($news->toUrl());
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-//    $this->assertSession()->pageTextContains('You are viewing unpublished content');
-//  }
-//
-//  /**
-//   * Test that admin routes allow access even for unpublished countries.
-//   */
-//  public function testAdminRouteAccess(): void {
-//    // Create an unpublished Country.
-//    $country = $this->createNode([
-//      'type' => 'country',
-//      'title' => 'Unpublished Country',
-//      'status' => NodeInterface::NOT_PUBLISHED,
-//      'field_country_code' => 'uc',
-//      'field_hostnames' => [$this->getHostname('uc')],
-//      'field_languages' => ['en'],
-//    ]);
-//
-//    // Create a content editor user.
-//    $editor = $this->createUser();
-//    $editor->addRole('content_editor');
-//    $editor->save();
-//    $this->drupalLogin($editor);
-//
-//    // Editor should be able to access edit form (admin route).
-//    $this->drupalGet($country->toUrl('edit-form'));
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-//    // Should NOT show warning on admin routes.
-//    $this->assertSession()->pageTextNotContains('You are viewing content on an unpublished country');
-//  }
-//
-//  /**
-//   * Test language restrictions for group content.
-//   */
-//  public function testGroupContentLanguageRestrictions(): void {
-//    // Create a Country that only allows English.
-//    $country = $this->createNode([
-//      'type' => 'country',
-//      'title' => 'English Only Country',
-//      'status' => NodeInterface::PUBLISHED,
-//      'field_country_code' => 'eo',
-//      'field_hostnames' => [$this->getHostname('eo')],
-//      'field_languages' => ['en'],
-//    ]);
-//
-//    // Create English News article.
-//    $news = $this->createNode([
-//      'type' => 'news',
-//      'title' => 'English News',
-//      'status' => NodeInterface::PUBLISHED,
-//      'og_audience' => ['target_id' => $country->id()],
-//    ]);
-//    $this->markEntityForCleanup($news);
-//
-//    // Add Spanish translation.
-//    $news_es = $news->addTranslation('es', $news->toArray());
-//    $news_es->setTitle('Noticias en español');
-//    $news_es->save();
-//
-//    // Anonymous user should not access Spanish version.
-//    $this->drupalGet($news_es->toUrl());
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
-//
-//    // Admin should access with warning.
-//    $admin = $this->createUser([], NULL, TRUE);
-//    $this->drupalLogin($admin);
-//
-//    $this->drupalGet($news_es->toUrl());
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-//    $this->assertSession()->pageTextContains('You are viewing content in a language');
-//  }
+  /**
+   * Test that non-members cannot access unpublished country.
+   */
+  public function testUnpublishedCountryAccessNonMember(): void {
+    $user = $this->createUser();
+    $this->markEntityForCleanup($user);
+    $this->drupalLogin($user);
+
+    $this->visitCountry($this->unpublishedCountry);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
+  }
+
+  /**
+   * Test that all users can access published country.
+   */
+  public function testPublishedCountryAccess(): void {
+    $this->visitCountry($this->publishedCountry);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
+
+    $user = $this->createUser();
+    $this->markEntityForCleanup($user);
+    $this->drupalLogin($user);
+    $this->visitCountry($this->publishedCountry);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
+    $this->assertSession()->pageTextNotContains('You are viewing content on an unpublished country');
+  }
+  /**
+   * Test language restrictions for non-privileged users.
+   */
+  public function testLanguageAccessRestrictions(): void {
+    $country = $this->createCountryOnHost(self::LANGUAGE_COUNTRY_HOST, [
+      'title' => 'English Only Country',
+      'field_country_code' => 'eo',
+      'field_languages' => ['en'],
+    ]);
+
+    $country_es = $country->addTranslation('es', $country->toArray());
+    $country_es->setTitle('País solo inglés');
+    $country_es->save();
+
+    $this->visitTranslationOnCountry($country_es, $country);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
+
+    $user = $this->createUser();
+    $this->markEntityForCleanup($user);
+    $this->drupalLogin($user);
+    $this->visitTranslationOnCountry($country_es, $country);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
+  }
+
+  /**
+   * Test that privileged users can access non-enabled languages with warning.
+   */
+  public function testLanguageAccessPrivileged(): void {
+    $country = $this->createCountryOnHost(self::LANGUAGE_COUNTRY_HOST, [
+      'title' => 'English Only Country',
+      'field_country_code' => 'eo',
+      'field_languages' => ['en'],
+    ]);
+
+    $country_es = $country->addTranslation('es', $country->toArray());
+    $country_es->setTitle('País solo inglés');
+    $country_es->save();
+
+    $admin = $this->createUser(['bypass node access']);
+    $this->markEntityForCleanup($admin);
+    $this->addMembership($country, $admin);
+    $this->drupalLogin($admin);
+    $this->visitTranslationOnCountry($country_es, $country);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
+    $this->assertSession()->pageTextContains('You are viewing content in a language');
+    $this->assertSession()->pageTextContains('that is not enabled for this country');
+  }
+  /**
+   * Test group content access on unpublished country.
+   */
+  public function testGroupContentOnUnpublishedCountry(): void {
+    $news = $this->createNewsForCountry($this->unpublishedCountry);
+
+    $this->visitGroupContentOnCountry($news, $this->unpublishedCountry);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
+
+    $user = $this->createUser();
+    $this->markEntityForCleanup($user);
+    $this->drupalLogin($user);
+    $this->visitGroupContentOnCountry($news, $this->unpublishedCountry);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
+  }
+
+  /**
+   * Test group content access on unpublished country for privileged users.
+   */
+  public function testGroupContentOnUnpublishedCountryPrivileged(): void {
+    $news = $this->createNewsForCountry($this->unpublishedCountry);
+
+    $admin = $this->createUser([], NULL, TRUE);
+    $this->drupalLogin($admin);
+    $this->visitGroupContentOnCountry($news, $this->unpublishedCountry);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
+    $this->assertSession()->pageTextContains('You are viewing content on an unpublished country');
+  }
+
+  /**
+   * Test unpublished group content on published country.
+   */
+  public function testUnpublishedGroupContent(): void {
+    $news = $this->createNewsForCountry($this->publishedCountry, [
+      'status' => NodeInterface::NOT_PUBLISHED,
+      'title' => 'Unpublished News',
+    ]);
+
+    $this->visitGroupContentOnCountry($news, $this->publishedCountry);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
+
+    $admin = $this->createUser([], NULL, TRUE);
+    $this->drupalLogin($admin);
+    $this->visitGroupContentOnCountry($news, $this->publishedCountry);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
+    $this->assertSession()->pageTextContains('You are viewing unpublished content');
+  }
+  /**
+   * Test that admin routes allow access even for unpublished countries.
+   */
+  public function testAdminRouteAccess(): void {
+    $editor = $this->createUser(['bypass node access']);
+    $this->markEntityForCleanup($editor);
+    $this->drupalLogin($editor);
+
+    $url = $this->unpublishedCountry->toUrl('edit-form');
+    $query = $url->getOption('query') ?? [];
+    $query['big_pipe_nojs'] = '1';
+    $url->setOption('query', $query);
+    $this->drupalGet($url);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
+    $this->assertSession()->pageTextNotContains('You are viewing content on an unpublished country');
+  }
+
+  /**
+   * Test language restrictions for group content.
+   */
+  public function testGroupContentLanguageRestrictions(): void {
+    $country = $this->createCountryOnHost(self::GROUP_COUNTRY_HOST, [
+      'title' => 'Group English Country',
+      'field_country_code' => 'ge',
+      'field_languages' => ['en'],
+    ]);
+
+    $news = $this->createNewsForCountry($country);
+    $news_es = $news->addTranslation('es', $news->toArray());
+    $news_es->setTitle('Noticias en español');
+    $news_es->save();
+
+    $this->visitTranslationOnCountry($news_es, $country);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
+
+    $admin = $this->createUser(['bypass node access']);
+    $this->markEntityForCleanup($admin);
+    $this->addMembership($country, $admin);
+    $this->drupalLogin($admin);
+    $this->visitTranslationOnCountry($news_es, $country);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
+    $this->assertSession()->pageTextContains('You are viewing content in a language');
+  }
 
   /**
    * Visits the given country's canonical URL on the mapped hostname.
@@ -406,6 +293,69 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $url = $country->toUrl();
     $host = $this->resolveCountryHost($country);
     $this->visitUrlOnHost($url, $host);
+  }
+
+  /**
+   * Creates a published Country on the provided hostname.
+   */
+  private function createCountryOnHost(string $host, array $overrides = []): NodeInterface {
+    $default_code = substr(str_replace(['.', '-'], '', $host), 0, 2) ?: 'ct';
+    $defaults = [
+      'type' => 'country',
+      'title' => sprintf('Country %s', $host),
+      'status' => NodeInterface::PUBLISHED,
+      'field_country_code' => $default_code,
+      'field_hostnames' => [$host],
+      'field_languages' => ['en'],
+    ];
+
+    $values = array_merge($defaults, $overrides);
+    $country = $this->createNode($values);
+    $this->markEntityForCleanup($country);
+    return $country;
+  }
+
+  /**
+   * Creates a News node assigned to the provided Country.
+   */
+  private function createNewsForCountry(NodeInterface $country, array $overrides = []): NodeInterface {
+    $defaults = [
+      'type' => 'news',
+      'title' => sprintf('News for %s', $country->label()),
+      'status' => NodeInterface::PUBLISHED,
+      'og_audience' => ['target_id' => $country->id()],
+    ];
+
+    $values = array_merge($defaults, $overrides);
+    $news = $this->createNode($values);
+    $this->markEntityForCleanup($news);
+    return $news;
+  }
+
+  /**
+   * Adds an OG membership for the provided account on the country.
+   */
+  private function addMembership(NodeInterface $country, $account): void {
+    /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
+    $membership_manager = \Drupal::service('og.membership_manager');
+    $membership = $membership_manager->createMembership($country, $account);
+    $membership->save();
+    $this->markEntityForCleanup($membership);
+  }
+
+  /**
+   * Visits group content on the correct hostname for its country.
+   */
+  private function visitGroupContentOnCountry(NodeInterface $node, NodeInterface $country): void {
+    $this->visitUrlOnHost($node->toUrl(), $this->resolveCountryHost($country));
+  }
+
+  /**
+   * Visits a translation of a country or group content on the country hostname.
+   */
+  private function visitTranslationOnCountry(NodeInterface $translation, NodeInterface $country): void {
+    $url = Url::fromRoute('entity.node.canonical', ['node' => $translation->id()]);
+    $this->visitUrlOnHost($url, $this->resolveCountryHost($country));
   }
 
   /**
