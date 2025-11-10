@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Entity\ContentEntityFormInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -137,9 +138,47 @@ function server_general_field_widget_single_element_moderation_state_default_for
  * Implements hook_node_access().
  */
 function server_general_node_access(NodeInterface $entity, string $op, AccountInterface $account) {
+  $country_result = _server_general_node_access_country_hostname($entity, $op, $account);
+  if ($country_result instanceof AccessResultInterface) {
+    return $country_result;
+  }
+
+  return _server_general_node_access_locked_pages($entity, $op);
+}
+
+/**
+ * Determines access when browsing a Country on its hostname.
+ */
+function _server_general_node_access_country_hostname(NodeInterface $entity, string $op, AccountInterface $account): ?AccessResultInterface {
+  if ($op !== 'view' || $entity->bundle() !== 'country' || $entity->isPublished()) {
+    return NULL;
+  }
+
+  /** @var \Drupal\og\OgContextInterface $og_context */
+  $og_context = \Drupal::service('og.context');
+  $current_group = $og_context->getGroup();
+  if (!$current_group instanceof NodeInterface || $current_group->id() !== $entity->id()) {
+    return NULL;
+  }
+
+  /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
+  $membership_manager = \Drupal::service('og.membership_manager');
+  if (!$membership_manager->isMember($entity, $account->id())) {
+    return NULL;
+  }
+
+  return AccessResult::allowed()
+    ->addCacheableDependency($entity)
+    ->addCacheContexts(['url.site', 'user'])
+    ->addCacheTags(['og_membership_list']);
+}
+
+/**
+ * Applies locked pages restrictions.
+ */
+function _server_general_node_access_locked_pages(NodeInterface $entity, string $op): AccessResultInterface {
   /** @var \Drupal\server_general\LockedPages $locked_pages_service */
   $locked_pages_service = \Drupal::service('server_general.locked_pages');
-  // The bundles that can be locked.
   $bundles = $locked_pages_service->getReferencedBundles();
 
   if (!in_array($entity->bundle(), $bundles)) {
@@ -147,11 +186,11 @@ function server_general_node_access(NodeInterface $entity, string $op, AccountIn
   }
 
   $main_settings = $locked_pages_service->getMainSettings();
-
   if ($op === 'delete' && $main_settings instanceof ConfigPages && $locked_pages_service->isNodeLocked($entity)) {
-    // Add cache tags to the cache metadata.
     $cache_tags = $main_settings->getCacheTags();
-    return AccessResult::forbidden()->addCacheableDependency($entity)->addCacheTags($cache_tags);
+    return AccessResult::forbidden()
+      ->addCacheableDependency($entity)
+      ->addCacheTags($cache_tags);
   }
 
   return AccessResult::neutral();
