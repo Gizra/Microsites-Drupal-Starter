@@ -14,22 +14,52 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
 
+  private const UNPUBLISHED_COUNTRY_HOST = 'unpublished-country.microsites-drupal-starter.ddev.site';
+  private const PUBLISHED_COUNTRY_HOST = 'published-country.microsites-drupal-starter.ddev.site';
+
+  /**
+   * The unpublished country fixture.
+   */
+  protected NodeInterface $unpublishedCountry;
+
+  /**
+   * The published country fixture.
+   */
+  protected NodeInterface $publishedCountry;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+
+    $this->unpublishedCountry = $this->createNode([
+      'type' => 'country',
+      'title' => 'Test Unpublished Country',
+      'status' => NodeInterface::NOT_PUBLISHED,
+      'field_country_code' => 'uc',
+      'field_hostnames' => [self::UNPUBLISHED_COUNTRY_HOST],
+      'field_languages' => ['en'],
+    ]);
+    $this->markEntityForCleanup($this->unpublishedCountry);
+
+    $this->publishedCountry = $this->createNode([
+      'type' => 'country',
+      'title' => 'Test Published Country',
+      'status' => NodeInterface::PUBLISHED,
+      'field_country_code' => 'pc',
+      'field_hostnames' => [self::PUBLISHED_COUNTRY_HOST],
+      'field_languages' => ['en'],
+    ]);
+    $this->markEntityForCleanup($this->publishedCountry);
+  }
+
   /**
    * Test that anonymous users cannot access unpublished country.
    */
   public function testUnpublishedCountryAccessAnonymous(): void {
-    // Create an unpublished Country node.
-    $country = $this->createNode([
-      'type' => 'country',
-      'title' => 'Test Unpublished Country',
-      'status' => NodeInterface::NOT_PUBLISHED,
-      'field_country_code' => 'tc',
-      'field_hostnames' => ['tc.microsites-drupal-starter.ddev.site'],
-      'field_languages' => ['en'],
-    ]);
-
     // Anonymous user should get forbidden accessing the country node.
-    $this->visitCountry($country, 'tc');
+    $this->visitCountry($this->unpublishedCountry);
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
   }
 
@@ -37,58 +67,36 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    * Test that privileged users can access unpublished country with warning.
    */
   public function testUnpublishedCountryAccessPrivileged(): void {
-    // Create an unpublished Country node.
-    $country = $this->createNode([
-      'type' => 'country',
-      'title' => 'Test Unpublished Country',
-      'status' => NodeInterface::NOT_PUBLISHED,
-      'field_country_code' => 'tc',
-      'field_hostnames' => ['tc.microsites-drupal-starter.ddev.site'],
-      'field_languages' => ['en'],
-    ]);
-
-
     // User with bypass node access should be able to access.
     $admin = $this->createUser([], NULL, TRUE);
     $this->drupalLogin($admin);
 
-    $this->visitCountry($country, 'tc');
+    $this->visitCountry($this->unpublishedCountry);
 
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
     // Should show warning.
     $this->assertSession()->pageTextContains('You are viewing content on an unpublished country');
   }
 
-//  /**
-//   * Test that group members can access unpublished country.
-//   */
-//  public function testUnpublishedCountryAccessGroupMember(): void {
-//    // Create an unpublished Country node.
-//    $country = $this->createNode([
-//      'type' => 'country',
-//      'title' => 'Test Unpublished Country',
-//      'status' => NodeInterface::NOT_PUBLISHED,
-//      'field_country_code' => 'tc',
-//      'field_hostnames' => [$this->getHostname('tc')],
-//      'field_languages' => ['en'],
-//    ]);
-//
-//    // Create a user and make them a member of the country group.
-//    $member = $this->createUser();
-//    $this->markEntityForCleanup($member);
-//
-//    /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
-//    $membership_manager = \Drupal::service('og.membership_manager');
-//    $membership = $membership_manager->createMembership($country, $member);
-//    $membership->save();
-//    $this->markEntityForCleanup($membership);
-//
-//    $this->drupalLogin($member);
-//    $this->drupalGet($country->toUrl());
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-//    // Should show warning for group members too.
-//    $this->assertSession()->pageTextContains('You are viewing content on an unpublished country');
-//  }
+  /**
+   * Test that group members can access unpublished country.
+   */
+  public function testUnpublishedCountryAccessGroupMember(): void {
+    $member = $this->createUser();
+    $this->markEntityForCleanup($member);
+
+    /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
+    $membership_manager = \Drupal::service('og.membership_manager');
+    $membership = $membership_manager->createMembership($this->unpublishedCountry, $member);
+    $membership->save();
+    $this->markEntityForCleanup($membership);
+
+    $this->drupalLogin($member);
+    $this->visitCountry($this->unpublishedCountry);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
+    // Should show warning for group members too.
+    $this->assertSession()->pageTextContains('You are viewing content on an unpublished country');
+  }
 //
 //  /**
 //   * Test that non-members cannot access unpublished country.
@@ -371,30 +379,39 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
   /**
    * Visits the given country's canonical URL on the mapped hostname.
    */
-  private function visitCountry(NodeInterface $country, string $identifier): void {
+  private function visitCountry(NodeInterface $country): void {
     $url = $country->toUrl();
-    $this->visitUrlOnHost($url, $identifier);
+    $host = $this->resolveCountryHost($country);
+    $this->visitUrlOnHost($url, $host);
   }
 
   /**
    * Visits the given URL on the mapped hostname.
    */
-  private function visitUrlOnHost(Url $url, string $identifier): void {
-    $baseUrl = $this->buildBaseUrl($identifier);
-//    $url->setOption('absolute', TRUE);
+  private function visitUrlOnHost(Url $url, string $host): void {
+    $baseUrl = $this->buildBaseUrl($host);
     $url->setOption('base_url', $baseUrl);
     $this->drupalGet($url);
   }
 
   /**
+   * Determines the hostname assigned to the provided country.
+   */
+  private function resolveCountryHost(NodeInterface $country): string {
+    $hosts = $country->get('field_hostnames')->getValue();
+    $host = $hosts[0]['value'] ?? '';
+
+    if ($host === '') {
+      throw new \LogicException('Country host configuration is missing.');
+    }
+
+    return $host;
+  }
+
+  /**
    * Builds the external base URL used for router access inside DDEV.
    */
-  private function buildBaseUrl(string $identifier): string {
-    $host = match ($identifier) {
-      'tc' => 'tc.microsites-drupal-starter.ddev.site',
-      default => 'microsites-drupal-starter.ddev.site',
-    };
-
+  private function buildBaseUrl(string $host): string {
     return sprintf('https://%s:4443', $host);
   }
 
