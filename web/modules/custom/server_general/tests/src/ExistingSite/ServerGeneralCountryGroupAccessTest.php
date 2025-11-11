@@ -18,7 +18,6 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
   private const UNPUBLISHED_COUNTRY_HOST = 'unpublished-country.microsites-drupal-starter.ddev.site';
   private const PUBLISHED_COUNTRY_HOST = 'published-country.microsites-drupal-starter.ddev.site';
   private const LANGUAGE_COUNTRY_HOST = 'language-country.microsites-drupal-starter.ddev.site';
-  private const GROUP_COUNTRY_HOST = 'group-country.microsites-drupal-starter.ddev.site';
 
   /**
    * The unpublished country fixture.
@@ -263,11 +262,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    * Test language restrictions for group content.
    */
   public function testGroupContentLanguageRestrictions(): void {
-    $country = $this->createCountryOnHost(self::GROUP_COUNTRY_HOST, [
-      'title' => 'Group English Country',
-      'field_country_code' => 'ge',
-      'field_languages' => ['en'],
-    ]);
+    $country = $this->publishedCountry;
 
     $news = $this->createNewsForCountry($country);
     $news_es = $news->addTranslation('es', $news->toArray());
@@ -290,9 +285,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    * Visits the given country's canonical URL on the mapped hostname.
    */
   private function visitCountry(NodeInterface $country): void {
-    $url = $country->toUrl();
-    $host = $this->resolveCountryHost($country);
-    $this->visitUrlOnHost($url, $host);
+    $this->visitUrlOnHost($country->toUrl(), $country);
   }
 
   /**
@@ -347,22 +340,21 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    * Visits group content on the correct hostname for its country.
    */
   private function visitGroupContentOnCountry(NodeInterface $node, NodeInterface $country): void {
-    $this->visitUrlOnHost($node->toUrl(), $this->resolveCountryHost($country));
+    $this->visitUrlOnHost($node->toUrl(), $country);
   }
 
   /**
    * Visits a translation of a country or group content on the country hostname.
    */
   private function visitTranslationOnCountry(NodeInterface $translation, NodeInterface $country): void {
-    $url = Url::fromRoute('entity.node.canonical', ['node' => $translation->id()]);
-    $this->visitUrlOnHost($url, $this->resolveCountryHost($country));
+    $this->visitUrlOnHost($translation->toUrl(), $country);
   }
 
   /**
    * Visits the given URL on the mapped hostname.
    */
-  private function visitUrlOnHost(Url $url, string $host): void {
-    $baseUrl = $this->buildBaseUrl($host);
+  private function visitUrlOnHost(Url $url, NodeInterface $country): void {
+    $baseUrl = $this->buildBaseUrl($this->resolveCountryHost($country));
     $url->setOption('base_url', $baseUrl);
     $this->drupalGet($url);
   }
