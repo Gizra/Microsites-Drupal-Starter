@@ -130,7 +130,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     // Check if the node itself is a Country group.
     if ($this->groupTypeManager->isGroup($node->getEntityTypeId(), $node->bundle())) {
       // No redirect needed if viewing the same Country as current context.
-      if (!$current_group || $node->id() === $current_group->id()) {
+      if ($current_group && $node->id() === $current_group->id()) {
         return;
       }
       $target_group = $node;
@@ -204,6 +204,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     $current_group = $this->ogContext->getGroup();
     $request = $this->requestStack->getCurrentRequest();
     $is_admin_route = $this->adminContext->isAdminRoute();
+    $route_name = $request ? $request->attributes->get('_route') : NULL;
 
     // Invalid group type, allow access.
     if ($current_group && !$current_group instanceof NodeInterface) {
@@ -214,6 +215,13 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
 
     // No group context (main site hostname), allow access to all content.
     if (!$current_group) {
+      if ($route_name && in_array($route_name, self::NODE_ROUTES)) {
+        $is_group_node = $this->groupTypeManager->isGroup($node->getEntityTypeId(), $node->bundle());
+        $is_group_content = $this->groupAudienceHelper->hasGroupAudienceField($node->getEntityTypeId(), $node->bundle());
+        if ($is_group_node || $is_group_content) {
+          $this->redirectToCorrectHostname($node, NULL);
+        }
+      }
       return AccessResult::allowed()
         ->addCacheableDependency($node)
         ->addCacheContexts(['url.site', 'languages:language_interface']);

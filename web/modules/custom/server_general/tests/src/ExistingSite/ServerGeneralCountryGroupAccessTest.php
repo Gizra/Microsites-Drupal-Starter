@@ -161,7 +161,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $country_es->setTitle('País solo inglés');
     $country_es->save();
 
-    $this->visitTranslationOnCountry($country_es, $country);
+    $this->visitUrlOnHost($country_es->toUrl(), $country);
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
 
     $user = $this->createUser();
@@ -227,10 +227,8 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    * Test unpublished group content on published country.
    */
   public function testUnpublishedGroupContent(): void {
-    $news = $this->createNewsForCountry($this->publishedCountry, [
-      'status' => NodeInterface::NOT_PUBLISHED,
-      'title' => 'Unpublished News',
-    ]);
+    $news = $this->createNewsForCountry($this->publishedCountry);
+    $news->setUnpublished()->save();
 
     $this->visitGroupContentOnCountry($news, $this->publishedCountry);
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
@@ -263,20 +261,22 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    */
   public function testGroupContentLanguageRestrictions(): void {
     $country = $this->publishedCountry;
+    $country->set('field_languages', ['en', 'es'])->save();
 
     $news = $this->createNewsForCountry($country);
     $news_es = $news->addTranslation('es', $news->toArray());
     $news_es->setTitle('Noticias en español');
     $news_es->save();
 
-    $this->visitTranslationOnCountry($news_es, $country);
+    $this->drupalGet($news_es->toUrl());
+
+    $this->visitUrlOnHost($news_es->toUrl(), $country);
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
 
     $admin = $this->createUser(['bypass node access']);
-    $this->markEntityForCleanup($admin);
     $this->addMembership($country, $admin);
     $this->drupalLogin($admin);
-    $this->visitTranslationOnCountry($news_es, $country);
+    $this->drupalGet($news_es->toUrl());
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
     $this->assertSession()->pageTextContains('You are viewing content in a language');
   }
@@ -311,18 +311,13 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
   /**
    * Creates a News node assigned to the provided Country.
    */
-  private function createNewsForCountry(NodeInterface $country, array $overrides = []): NodeInterface {
-    $defaults = [
+  private function createNewsForCountry(NodeInterface $country): NodeInterface {
+    return $this->createNode([
       'type' => 'news',
       'title' => sprintf('News for %s', $country->label()),
       'status' => NodeInterface::PUBLISHED,
       'og_audience' => ['target_id' => $country->id()],
-    ];
-
-    $values = array_merge($defaults, $overrides);
-    $news = $this->createNode($values);
-    $this->markEntityForCleanup($news);
-    return $news;
+    ]);
   }
 
   /**
