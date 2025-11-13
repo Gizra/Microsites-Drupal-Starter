@@ -278,7 +278,10 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $this->drupalLogin($admin);
     $this->drupalGet($news_es->toUrl());
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-    $this->assertSession()->pageTextContains('You are viewing content in a language');
+    $this->assertSame(
+      self::PUBLISHED_COUNTRY_HOST,
+      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
+    );
   }
 
   /**

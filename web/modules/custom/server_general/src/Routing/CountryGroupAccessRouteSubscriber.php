@@ -115,40 +115,15 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    *
    * @param \Drupal\node\NodeInterface $node
    *   The node being accessed.
-   * @param ?\Drupal\node\NodeInterface $current_group
-   *   The current group context.
    */
-  protected function redirectToCorrectHostname(NodeInterface $node, ?NodeInterface $current_group): void {
+  protected function redirectToCorrectHostname(NodeInterface $node): void {
     $request = $this->requestStack->getCurrentRequest();
     if (!$request) {
       return;
     }
 
     $current_hostname = $request->getHost();
-    $target_group = NULL;
-
-    // Check if the node itself is a Country group.
-    if ($this->groupTypeManager->isGroup($node->getEntityTypeId(), $node->bundle())) {
-      // No redirect needed if viewing the same Country as current context.
-      if ($current_group && $node->id() === $current_group->id()) {
-        return;
-      }
-      $target_group = $node;
-    }
-    // Check if the node is group content.
-    elseif ($this->groupAudienceHelper->hasGroupAudienceField($node->getEntityTypeId(), $node->bundle())) {
-      $content_groups = $this->membershipManager->getGroups($node);
-      if (empty($content_groups['node'])) {
-        return;
-      }
-
-      $first_group = reset($content_groups['node']);
-      // No redirect needed if content belongs to current group.
-      if ($current_group && $first_group->id() === $current_group->id()) {
-        return;
-      }
-      $target_group = $first_group;
-    }
+    $target_group = $this->resolveTargetGroup($node);
 
     // No target group found.
     if (!$target_group) {
@@ -201,61 +176,67 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    *   The access result.
    */
   public function access(AccountInterface $account, NodeInterface $node): AccessResultInterface {
-    $current_group = $this->ogContext->getGroup();
     $request = $this->requestStack->getCurrentRequest();
-    $is_admin_route = $this->adminContext->isAdminRoute();
     $route_name = $request ? $request->attributes->get('_route') : NULL;
+    $is_node_route = $this->isNodeRoute($route_name);
+    $is_admin_route = $this->adminContext->isAdminRoute();
+    $context_group = $this->ogContext->getGroup();
+    $target_group = $this->resolveTargetGroup($node);
 
-    // Invalid group type, allow access.
-    if ($current_group && !$current_group instanceof NodeInterface) {
+    if ($context_group && !$context_group instanceof NodeInterface) {
       return AccessResult::allowed()
         ->addCacheableDependency($node)
         ->addCacheContexts(['url.site', 'languages:language_interface']);
     }
 
-    // No group context (main site hostname), allow access to all content.
-    if (!$current_group) {
-      if ($route_name && in_array($route_name, self::NODE_ROUTES)) {
-        $is_group_node = $this->groupTypeManager->isGroup($node->getEntityTypeId(), $node->bundle());
-        $is_group_content = $this->groupAudienceHelper->hasGroupAudienceField($node->getEntityTypeId(), $node->bundle());
-        if ($is_group_node || $is_group_content) {
-          $this->redirectToCorrectHostname($node, NULL);
-        }
-      }
-      return AccessResult::allowed()
-        ->addCacheableDependency($node)
-        ->addCacheContexts(['url.site', 'languages:language_interface']);
-    }
-
-    // Block access to unpublished country hostnames for non-privileged users.
-    if (!$is_admin_route && !$current_group->isPublished() && !$this->isPrivilegedUser($account, $current_group)) {
+    if ($context_group instanceof NodeInterface && !$is_admin_route && !$context_group->isPublished() && !$this->isPrivilegedUser($account, $context_group)) {
       return AccessResult::forbidden('Cannot access content on unpublished country hostname')
-        ->addCacheableDependency($current_group)
+        ->addCacheableDependency($context_group)
         ->addCacheContexts(['url.site', 'user.permissions']);
     }
 
-    // Handle Country group nodes.
+    if (!$target_group instanceof NodeInterface) {
+      if ($context_group instanceof NodeInterface && !$is_admin_route && !$context_group->isPublished()) {
+        $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
+          '@title' => $context_group->label(),
+        ]));
+      }
+
+      $result = AccessResult::allowed()
+        ->addCacheableDependency($node)
+        ->addCacheContexts(['url.site', 'languages:language_interface']);
+
+      if ($context_group instanceof NodeInterface) {
+        $result->addCacheableDependency($context_group);
+      }
+
+      return $result;
+    }
+
+    $result = $this->evaluateGroupedNodeAccess($node, $target_group, $account, $is_admin_route);
+
+    if ($result->isAllowed() && $this->shouldRedirect($context_group, $target_group, $is_node_route, $is_admin_route)) {
+      $this->redirectToCorrectHostname($node);
+    }
+
+    return $result;
+  }
+
+  /**
+   * Evaluates access for nodes attached to a Country group.
+   */
+  protected function evaluateGroupedNodeAccess(NodeInterface $node, NodeInterface $country_group, AccountInterface $account, bool $is_admin_route): AccessResultInterface {
     if ($this->groupTypeManager->isGroup($node->getEntityTypeId(), $node->bundle())) {
-      return $this->checkGroupNodeAccess($node, $current_group, $account, $is_admin_route);
+      return $this->checkGroupNodeAccess($node, $country_group, $account, $is_admin_route);
     }
 
-    // Handle group content nodes (e.g., News articles).
     if ($this->groupAudienceHelper->hasGroupAudienceField($node->getEntityTypeId(), $node->bundle())) {
-      return $this->checkGroupContentAccess($node, $current_group, $account, $request, $is_admin_route);
+      return $this->checkGroupContentAccess($node, $country_group, $account, $is_admin_route);
     }
 
-    // Show warning if viewing content on an unpublished country's hostname.
-    // This is for non-group content (like landing pages).
-    if (!$is_admin_route && !$current_group->isPublished()) {
-      $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
-        '@title' => $current_group->label(),
-      ]));
-    }
-
-    // Not group content, allow access.
     return AccessResult::allowed()
       ->addCacheableDependency($node)
-      ->addCacheableDependency($current_group)
+      ->addCacheableDependency($country_group)
       ->addCacheContexts(['url.site', 'languages:language_interface']);
   }
 
@@ -264,8 +245,8 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    *
    * @param \Drupal\node\NodeInterface $node
    *   The Country node being accessed.
-   * @param \Drupal\node\NodeInterface $current_group
-   *   The current group context.
+   * @param \Drupal\node\NodeInterface $country_group
+   *   The Country group associated with the node.
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The account to check access for.
    * @param bool $is_admin_route
@@ -274,57 +255,35 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    * @return \Drupal\Core\Access\AccessResultInterface
    *   The access result.
    */
-  protected function checkGroupNodeAccess(NodeInterface $node, NodeInterface $current_group, AccountInterface $account, bool $is_admin_route): AccessResultInterface {
-    // Viewing a different Country than the current context.
-    if ($node->id() !== $current_group->id()) {
-      // On admin routes, allow access (they already have permission to be
-      // there).
-      if ($is_admin_route) {
-        return AccessResult::allowed()
-          ->addCacheableDependency($node)
-          ->addCacheableDependency($current_group)
-          ->addCacheContexts(['url.site']);
-      }
-
-      // On node-specific routes, redirect to correct hostname.
-      $request = $this->requestStack->getCurrentRequest();
-      $route_name = $request ? $request->attributes->get('_route') : NULL;
-      if ($route_name && in_array($route_name, self::NODE_ROUTES)) {
-        $this->redirectToCorrectHostname($node, $current_group);
-      }
-
-      // Deny access for non-admin routes.
-      return AccessResult::forbidden('Cannot view this group from the current hostname')
+  protected function checkGroupNodeAccess(NodeInterface $node, NodeInterface $country_group, AccountInterface $account, bool $is_admin_route): AccessResultInterface {
+    if ($is_admin_route) {
+      return AccessResult::allowed()
         ->addCacheableDependency($node)
-        ->addCacheableDependency($current_group)
+        ->addCacheableDependency($country_group)
         ->addCacheContexts(['url.site']);
     }
 
-    // Show warning if viewing unpublished country.
-    if (!$is_admin_route && !$current_group->isPublished()) {
-      // Block access for non-privileged users.
-      if (!$this->isPrivilegedUser($account, $current_group)) {
+    if (!$country_group->isPublished()) {
+      if (!$this->isPrivilegedUser($account, $country_group)) {
         return AccessResult::forbidden('Cannot access unpublished country')
           ->addCacheableDependency($node)
-          ->addCacheableDependency($current_group)
+          ->addCacheableDependency($country_group)
           ->addCacheContexts(['url.site', 'user.permissions']);
       }
 
-      // Show warning for privileged users.
       $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
-        '@title' => $current_group->label(),
+        '@title' => $country_group->label(),
       ]));
     }
 
-    // Check language access.
-    $language_access = $this->checkLanguageAccess($node, $current_group, $account, $is_admin_route);
+    $language_access = $this->checkLanguageAccess($node, $country_group, $account, $is_admin_route);
     if ($language_access) {
       return $language_access;
     }
 
     return AccessResult::allowed()
       ->addCacheableDependency($node)
-      ->addCacheableDependency($current_group)
+      ->addCacheableDependency($country_group)
       ->addCacheContexts(['url.site', 'languages:language_interface', 'user.permissions']);
   }
 
@@ -384,66 +343,43 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    *
    * @param \Drupal\node\NodeInterface $node
    *   The group content node being accessed.
-   * @param \Drupal\node\NodeInterface $current_group
-   *   The current group context.
+   * @param \Drupal\node\NodeInterface $country_group
+   *   The Country group context.
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The account to check access for.
-   * @param \Symfony\Component\HttpFoundation\Request|null $request
-   *   The current request.
    * @param bool $is_admin_route
    *   Whether the current route is an admin route.
    *
    * @return \Drupal\Core\Access\AccessResultInterface
    *   The access result.
    */
-  protected function checkGroupContentAccess(NodeInterface $node, NodeInterface $current_group, AccountInterface $account, $request, bool $is_admin_route): AccessResultInterface {
-    $content_groups = $this->membershipManager->getGroups($node);
-
+  protected function checkGroupContentAccess(NodeInterface $node, NodeInterface $country_group, AccountInterface $account, bool $is_admin_route): AccessResultInterface {
     // On admin routes, allow access (they already have permission to be there).
     if ($is_admin_route) {
       return AccessResult::allowed()
         ->addCacheableDependency($node)
-        ->addCacheableDependency($current_group)
+        ->addCacheableDependency($country_group)
         ->addCacheContexts(['url.site']);
     }
 
-    // On node-specific routes, redirect to correct hostname before access
-    // checks.
-    $route_name = $request ? $request->attributes->get('_route') : NULL;
-    if ($route_name && in_array($route_name, self::NODE_ROUTES)) {
-      $this->redirectToCorrectHostname($node, $current_group);
-    }
-
-    // Check if content belongs to current group.
-    $belongs_to_current_group = FALSE;
-    if (isset($content_groups['node'])) {
-      foreach ($content_groups['node'] as $group) {
-        if ($group->id() === $current_group->id()) {
-          $belongs_to_current_group = TRUE;
-          break;
-        }
-      }
-    }
-
-    // Content doesn't belong to current group, deny access.
-    if (!$belongs_to_current_group) {
+    if (!$this->nodeBelongsToGroup($node, $country_group)) {
       return AccessResult::forbidden('Content does not belong to the current group context')
         ->addCacheableDependency($node)
         ->addCacheContexts(['url.site']);
     }
 
     // If the country group is unpublished, only allow privileged users.
-    if (!$current_group->isPublished() && !$this->isPrivilegedUser($account, $current_group)) {
+    if (!$country_group->isPublished() && !$this->isPrivilegedUser($account, $country_group)) {
       return AccessResult::forbidden('Cannot access content of unpublished country')
         ->addCacheableDependency($node)
-        ->addCacheableDependency($current_group)
+        ->addCacheableDependency($country_group)
         ->addCacheContexts(['url.site', 'user.permissions']);
     }
 
     // Show warning if viewing content on unpublished country.
-    if (!$is_admin_route && !$current_group->isPublished()) {
+    if (!$is_admin_route && !$country_group->isPublished()) {
       $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
-        '@title' => $current_group->label(),
+        '@title' => $country_group->label(),
       ]));
     }
 
@@ -455,15 +391,77 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     }
 
     // Check language access.
-    $language_access = $this->checkLanguageAccess($node, $current_group, $account, $is_admin_route);
+    $language_access = $this->checkLanguageAccess($node, $country_group, $account, $is_admin_route);
     if ($language_access) {
       return $language_access;
     }
 
     return AccessResult::allowed()
       ->addCacheableDependency($node)
-      ->addCacheableDependency($current_group)
+      ->addCacheableDependency($country_group)
       ->addCacheContexts(['url.site', 'languages:language_interface']);
+  }
+
+  /**
+   * Determines whether a redirect to the correct hostname is required.
+   */
+  protected function shouldRedirect(?NodeInterface $context_group, NodeInterface $target_group, bool $is_node_route, bool $is_admin_route): bool {
+    if ($is_admin_route || !$is_node_route) {
+      return FALSE;
+    }
+
+    if (!$context_group instanceof NodeInterface) {
+      return TRUE;
+    }
+
+    return $context_group->id() !== $target_group->id();
+  }
+
+  /**
+   * Indicates if the given route name is one of the monitored node routes.
+   */
+  protected function isNodeRoute(?string $route_name): bool {
+    return $route_name && in_array($route_name, self::NODE_ROUTES, TRUE);
+  }
+
+  /**
+   * Checks if the node belongs to the provided Country group.
+   */
+  protected function nodeBelongsToGroup(NodeInterface $node, NodeInterface $country_group): bool {
+    if (!$node->hasField('og_reference')) {
+      return FALSE;
+    }
+
+    return $node->get('og_reference')->target_id == $country_group->id();
+  }
+
+  /**
+   * Determines the target Country group for the provided node.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node being accessed.
+   *
+   * @return \Drupal\node\NodeInterface|null
+   *   The resolved Country group or NULL if not applicable.
+   */
+  protected function resolveTargetGroup(NodeInterface $node): ?NodeInterface {
+    // Country nodes are already the target group.
+    if ($this->groupTypeManager->isGroup($node->getEntityTypeId(), $node->bundle())) {
+      return $node;
+    }
+
+    // For group content, extract the first associated Country group.
+    if ($this->groupAudienceHelper->hasGroupAudienceField($node->getEntityTypeId(), $node->bundle())) {
+      $content_groups = $this->membershipManager->getGroups($node);
+      if (!empty($content_groups['node'])) {
+        $target_group = reset($content_groups['node']);
+        if ($target_group instanceof NodeInterface) {
+          return $target_group;
+        }
+      }
+    }
+
+    return NULL;
   }
 
 }
