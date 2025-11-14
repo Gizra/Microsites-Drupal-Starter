@@ -6,6 +6,7 @@ namespace Drupal\server_general\Routing;
 
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Routing\AdminContext;
 use Drupal\Core\Routing\RouteSubscriberBase;
@@ -17,6 +18,7 @@ use Drupal\og\GroupTypeManagerInterface;
 use Drupal\og\MembershipManagerInterface;
 use Drupal\og\OgContextInterface;
 use Drupal\og\OgGroupAudienceHelperInterface;
+use Drupal\og\OgMembershipInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouteCollection;
 
@@ -72,6 +74,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     protected readonly RequestStack $requestStack,
     protected readonly MessengerInterface $messenger,
     protected readonly AdminContext $adminContext,
+    protected readonly EntityTypeManagerInterface $entityTypeManager,
   ) {}
 
   /**
@@ -106,8 +109,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       return TRUE;
     }
 
-    // Check if user is a member of the group.
-    return $this->membershipManager->isMember($group, $account->id());
+    return $this->userHasActiveMembership($account, $group);
   }
 
   /**
@@ -182,38 +184,29 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     $is_admin_route = $this->adminContext->isAdminRoute();
     $context_group = $this->ogContext->getGroup();
     $target_group = $this->resolveTargetGroup($node);
+    $node_access_result = $this->evaluateNodeAccess($node, $account, $is_node_route);
 
-    if ($context_group && !$context_group instanceof NodeInterface) {
-      return AccessResult::allowed()
-        ->addCacheableDependency($node)
-        ->addCacheContexts(['url.site', 'languages:language_interface']);
+    if ($node_access_result instanceof AccessResultInterface && !$node_access_result->isAllowed()) {
+      return $this->denyByNodeAccess($node_access_result, $node);
     }
 
-    if ($context_group instanceof NodeInterface && !$is_admin_route && !$context_group->isPublished() && !$this->isPrivilegedUser($account, $context_group)) {
-      return AccessResult::forbidden('Cannot access content on unpublished country hostname')
-        ->addCacheableDependency($context_group)
-        ->addCacheContexts(['url.site', 'user.permissions']);
-    }
-
-    if (!$target_group instanceof NodeInterface) {
-      if ($context_group instanceof NodeInterface && !$is_admin_route && !$context_group->isPublished()) {
-        $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
-          '@title' => $context_group->label(),
-        ]));
-      }
-
-      $result = AccessResult::allowed()
-        ->addCacheableDependency($node)
-        ->addCacheContexts(['url.site', 'languages:language_interface']);
-
-      if ($context_group instanceof NodeInterface) {
-        $result->addCacheableDependency($context_group);
-      }
-
+    if ($result = $this->allowWhenContextIsNotNode($context_group, $node)) {
       return $result;
     }
 
+    if ($denied = $this->denyOnUnpublishedContextHostname($context_group, $target_group, $account, $is_admin_route)) {
+      return $denied;
+    }
+
+    if (!$target_group instanceof NodeInterface) {
+      return $this->accessWithoutTargetGroup($context_group, $node, $is_admin_route);
+    }
+
     $result = $this->evaluateGroupedNodeAccess($node, $target_group, $account, $is_admin_route);
+
+    if ($node_access_result instanceof AccessResultInterface) {
+      $result->addCacheableDependency($node_access_result);
+    }
 
     if ($result->isAllowed() && $this->shouldRedirect($context_group, $target_group, $is_node_route, $is_admin_route)) {
       $this->redirectToCorrectHostname($node);
@@ -230,7 +223,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       return $this->checkGroupNodeAccess($node, $country_group, $account, $is_admin_route);
     }
 
-    if ($this->groupAudienceHelper->hasGroupAudienceField($node->getEntityTypeId(), $node->bundle())) {
+    if ($this->groupTypeManager->isGroupContent($node->getEntityTypeId(), $node->bundle())) {
       return $this->checkGroupContentAccess($node, $country_group, $account, $is_admin_route);
     }
 
@@ -436,6 +429,107 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
   }
 
   /**
+   * Evaluates and caches node access when needed.
+   */
+  protected function evaluateNodeAccess(NodeInterface $node, AccountInterface $account, bool $is_node_route): ?AccessResultInterface {
+    if (!$is_node_route) {
+      return NULL;
+    }
+
+    $is_group_node = $this->groupTypeManager->isGroup($node->getEntityTypeId(), $node->bundle());
+    $is_group_content = $this->groupTypeManager->isGroupContent($node->getEntityTypeId(), $node->bundle());
+
+    if (!$is_group_node && !$is_group_content) {
+      return NULL;
+    }
+
+    return $node->access('view', $account, TRUE);
+  }
+
+  /**
+   * Builds a forbidden result when node access denies the request.
+   */
+  protected function denyByNodeAccess(AccessResultInterface $node_access_result, NodeInterface $node): AccessResultInterface {
+    return AccessResult::forbidden('Access denied by node access')
+      ->addCacheableDependency($node_access_result)
+      ->addCacheableDependency($node);
+  }
+
+  /**
+   * Allows access when the group context is not a node.
+   */
+  protected function allowWhenContextIsNotNode(mixed $context_group, NodeInterface $node): ?AccessResultInterface {
+    if (!$context_group || $context_group instanceof NodeInterface) {
+      return NULL;
+    }
+
+    return AccessResult::allowed()
+      ->addCacheableDependency($node)
+      ->addCacheContexts(['url.site', 'languages:language_interface']);
+  }
+
+  /**
+   * Denies access when browsing another unpublished country hostname.
+   */
+  protected function denyOnUnpublishedContextHostname(?NodeInterface $context_group, ?NodeInterface $target_group, AccountInterface $account, bool $is_admin_route): ?AccessResultInterface {
+    if (!$context_group instanceof NodeInterface) {
+      return NULL;
+    }
+
+    if ($is_admin_route || $context_group->isPublished()) {
+      return NULL;
+    }
+
+    if ($this->isSameGroupContext($context_group, $target_group)) {
+      return NULL;
+    }
+
+    if ($this->isPrivilegedUser($account, $context_group)) {
+      return NULL;
+    }
+
+    return AccessResult::forbidden('Cannot access content on unpublished country hostname')
+      ->addCacheableDependency($context_group)
+      ->addCacheContexts(['url.site', 'user.permissions']);
+  }
+
+  /**
+   * Builds the access result when no target group was resolved.
+   */
+  protected function accessWithoutTargetGroup(?NodeInterface $context_group, NodeInterface $node, bool $is_admin_route): AccessResultInterface {
+    if ($context_group instanceof NodeInterface && !$is_admin_route && !$context_group->isPublished()) {
+      $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
+        '@title' => $context_group->label(),
+      ]));
+    }
+
+    $result = AccessResult::allowed()
+      ->addCacheableDependency($node)
+      ->addCacheContexts(['url.site', 'languages:language_interface']);
+
+    if ($context_group instanceof NodeInterface) {
+      $result->addCacheableDependency($context_group);
+    }
+
+    return $result;
+  }
+
+  /**
+   * Indicates if both context and target reference the same node.
+   */
+  protected function isSameGroupContext(?NodeInterface $context_group, ?NodeInterface $target_group): bool {
+    if (!$context_group instanceof NodeInterface) {
+      return FALSE;
+    }
+
+    if (!$target_group instanceof NodeInterface) {
+      return FALSE;
+    }
+
+    return $context_group->id() === $target_group->id();
+  }
+
+  /**
    * Determines the target Country group for the provided node.
    *
    * @param \Drupal\node\NodeInterface $node
@@ -462,6 +556,27 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     }
 
     return NULL;
+  }
+
+  /**
+   * Determines whether the user has an active OG membership on the group.
+   */
+  protected function userHasActiveMembership(AccountInterface $account, NodeInterface $group): bool {
+    if ($account->isAnonymous()) {
+      return FALSE;
+    }
+
+    $query = $this->entityTypeManager
+      ->getStorage('og_membership')
+      ->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('uid', $account->id())
+      ->condition('entity_type', $group->getEntityTypeId())
+      ->condition('entity_id', $group->id())
+      ->condition('state', OgMembershipInterface::STATE_ACTIVE)
+      ->range(0, 1);
+
+    return (bool) $query->count()->execute();
   }
 
 }

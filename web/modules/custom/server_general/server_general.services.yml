@@ -9,6 +9,6 @@ services:
       - { name: event_subscriber }
   server_general.country_group_access_route_subscriber:
     class: Drupal\server_general\Routing\CountryGroupAccessRouteSubscriber
-    arguments: ['@og.context', '@og.group_audience_helper', '@og.membership_manager', '@og.group_type_manager', '@request_stack', '@messenger', '@router.admin_context']
+    arguments: ['@og.context', '@og.group_audience_helper', '@og.membership_manager', '@og.group_type_manager', '@request_stack', '@messenger', '@router.admin_context', '@entity_type.manager']
     tags:
       - { name: event_subscriber }
