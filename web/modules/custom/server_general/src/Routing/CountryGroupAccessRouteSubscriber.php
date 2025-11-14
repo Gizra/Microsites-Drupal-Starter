@@ -125,19 +125,13 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     }
 
     $current_hostname = $request->getHost();
-    $target_group = $this->resolveTargetGroup($node);
+    $country = $this->resolveCountry($node);
 
-    // No target group found.
-    if (!$target_group) {
+    if (!$country) {
       return;
     }
 
-    // Ensure target group is a Node (Country groups are nodes).
-    if (!$target_group instanceof NodeInterface) {
-      return;
-    }
-
-    $hostnames = $target_group->get('field_hostnames');
+    $hostnames = $country->get('field_hostnames');
     if ($hostnames->isEmpty()) {
       return;
     }
@@ -183,7 +177,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     $is_node_route = $this->isNodeRoute($route_name);
     $is_admin_route = $this->adminContext->isAdminRoute();
     $context_group = $this->ogContext->getGroup();
-    $target_group = $this->resolveTargetGroup($node);
+    $target_group = $this->resolveCountry($node);
     $node_access_result = $this->evaluateNodeAccess($node, $account, $is_node_route);
 
     if ($node_access_result instanceof AccessResultInterface && !$node_access_result->isAllowed()) {
@@ -538,24 +532,23 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    * @return \Drupal\node\NodeInterface|null
    *   The resolved Country group or NULL if not applicable.
    */
-  protected function resolveTargetGroup(NodeInterface $node): ?NodeInterface {
+  protected function resolveCountry(NodeInterface $node): ?NodeInterface {
     // Country nodes are already the target group.
     if ($this->groupTypeManager->isGroup($node->getEntityTypeId(), $node->bundle())) {
       return $node;
     }
 
     // For group content, extract the first associated Country group.
-    if ($this->groupAudienceHelper->hasGroupAudienceField($node->getEntityTypeId(), $node->bundle())) {
-      $content_groups = $this->membershipManager->getGroups($node);
-      if (!empty($content_groups['node'])) {
-        $target_group = reset($content_groups['node']);
-        if ($target_group instanceof NodeInterface) {
-          return $target_group;
-        }
-      }
+    if (!$this->groupAudienceHelper->hasGroupAudienceField($node->getEntityTypeId(), $node->bundle())) {
+      return NULL;
     }
 
-    return NULL;
+    $content_groups = $this->membershipManager->getGroups($node);
+    if (empty($content_groups['node'])) {
+      return NULL;
+    }
+
+    return reset($content_groups['node']);
   }
 
   /**
