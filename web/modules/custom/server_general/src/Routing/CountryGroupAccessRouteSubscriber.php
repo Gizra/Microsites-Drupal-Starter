@@ -155,7 +155,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
 
     $country = $this->ogContext->getGroup();
     // No country context resolved.
-    if (empty($country)) {
+    if (empty($country) || !$country instanceof NodeInterface) {
       return AccessResult::neutral();
     }
 
@@ -165,6 +165,11 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
         // @todo: per user
         ->addCacheableDependency($country_access)
         ->addCacheableDependency($node);
+    }
+
+    $language_access = $this->checkLanguageAccess($node, $country, $account);
+    if ($language_access->isForbidden()) {
+      return $language_access;
     }
 
     if ($country->id() !== $node->id()) {
@@ -199,7 +204,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    *
    * @param \Drupal\node\NodeInterface $node
    *   The node to check.
-   * @param \Drupal\node\NodeInterface $country_group
+   * @param \Drupal\node\NodeInterface $country
    *   The Country group entity.
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The account to check access for.
@@ -208,9 +213,9 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    *   Returns forbidden if language is not allowed, null if check should be
    *   skipped or language is allowed.
    */
-  protected function checkLanguageAccess(NodeInterface $node, NodeInterface $country_group, AccountInterface $account): ?AccessResultInterface {
+  protected function checkLanguageAccess(NodeInterface $node, NodeInterface $country, AccountInterface $account): ?AccessResultInterface {
     $allowed_languages = [];
-    foreach ($country_group->get('field_languages') as $item) {
+    foreach ($country->get('field_languages') as $item) {
       $allowed_languages[] = $item->value;
     }
 
@@ -225,15 +230,16 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       return NULL;
     }
 
-    // Language is not enabled but allow privileged users to access.
-    if (!$this->membershipManager->isMember($country_group, $account->id())) {
+
+    if (!$this->membershipManager->isMember($country, $account->id())) {
       // Language is not available for regular users.
       return AccessResult::forbidden('This language is not available for the current country context')
         ->addCacheableDependency($node)
-        ->addCacheableDependency($country_group)
+        ->addCacheableDependency($country)
         ->addCacheContexts(['url.site', 'languages:language_interface', 'user.permissions']);
     }
 
+    // Language is not enabled but allow group member to access.
     $language = $node->language();
     $this->messenger->addWarning($this->t('You are viewing content in a language (@language) that is not enabled for this country.', [
       '@language' => $language->getName(),
