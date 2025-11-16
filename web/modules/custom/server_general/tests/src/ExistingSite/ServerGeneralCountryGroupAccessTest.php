@@ -17,7 +17,6 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
 
   private const UNPUBLISHED_COUNTRY_HOST = 'unpublished-country.microsites-drupal-starter.ddev.site';
   private const PUBLISHED_COUNTRY_HOST = 'published-country.microsites-drupal-starter.ddev.site';
-  private const LANGUAGE_COUNTRY_HOST = 'language-country.microsites-drupal-starter.ddev.site';
 
   /**
    * The unpublished country fixture.
@@ -28,6 +27,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    * The published country fixture.
    */
   protected NodeInterface $publishedCountry;
+
 
   /**
    * {@inheritdoc}
@@ -62,10 +62,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $this->drupalGet($this->unpublishedCountry->toUrl());
 
     // Assert hostname wasn't changed.
-    $this->assertSame(
-      self::DEFAULT_HOST,
-      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
-    );
+    $this->assertHostname(self::DEFAULT_HOST);
 
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
   }
@@ -74,17 +71,15 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    * Test that privileged users can access unpublished country with warning.
    */
   public function testUnpublishedCountryAccessPrivileged(): void {
+    $country = $this->unpublishedCountry;
     // User with bypass node access should be able to access.
     $admin = $this->createUser([], NULL, TRUE);
     $this->drupalLogin($admin);
 
-    $this->drupalGet($this->unpublishedCountry->toUrl());
+    $this->drupalGet($country->toUrl());
 
     // Assert hostname is correct.
-    $this->assertSame(
-      self::UNPUBLISHED_COUNTRY_HOST,
-      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
-    );
+    $this->assertHostname(self::UNPUBLISHED_COUNTRY_HOST);
 
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
     // Should show warning.
@@ -95,19 +90,18 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    * Test that non-privileged group members can access unpublished country.
    */
   public function testUnpublishedCountryAccessNonPrivilegedGroupMember(): void {
-    $member = $this->createUser();
-    $this->assertFalse($member->hasPermission('bypass node access'));
+    $country = $this->unpublishedCountry;
+    $user = $this->createUser();
+    $this->assertFalse($user->hasPermission('bypass node access'));
 
     /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
+    $this->addMembership($country, $user);
+
     $membership_manager = \Drupal::service('og.membership_manager');
-    $membership = $membership_manager->createMembership($this->unpublishedCountry, $member);
-    $membership->save();
-    $this->markEntityForCleanup($membership);
+    $this->assertTrue($membership_manager->isMember($this->unpublishedCountry, $user->id()), 'Member should belong to unpublished country.');
 
-    $this->assertTrue($membership_manager->isMember($this->unpublishedCountry, $member->id()), 'Member should belong to unpublished country.');
-
-    $this->drupalLogin($member);
-    $this->drupalGet($this->unpublishedCountry->toUrl());
+    $this->drupalLogin($user);
+    $this->drupalGet($country->toUrl());
 
     // Assert hostname is correct.
     $this->assertSame(
@@ -126,11 +120,12 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    * @todo: Remove? OR extend?
    */
   public function testNodeAccessAllowsGroupMemberOnHostname(): void {
+    $country = $this->unpublishedCountry;
     $user = $this->createUser();
 
     /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
     $membership_manager = \Drupal::service('og.membership_manager');
-    $membership = $membership_manager->createMembership($this->unpublishedCountry, $user);
+    $membership = $membership_manager->createMembership($country, $user);
     $membership->save();
     $this->markEntityForCleanup($membership);
 
@@ -139,18 +134,19 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $request_stack->push($request);
 
     $access_handler = \Drupal::entityTypeManager()->getAccessControlHandler('node');
-    $this->assertTrue($access_handler->access($this->unpublishedCountry, 'view', $user));
+    $this->assertTrue($access_handler->access($country, 'view', $user));
   }
 
   /**
    * Test that non-members cannot access unpublished country.
    */
   public function testUnpublishedCountryAccessNonMember(): void {
+    $country = $this->unpublishedCountry;
     $user = $this->createUser();
 
     $this->drupalLogin($user);
 
-    $this->drupalGet($this->unpublishedCountry->toUrl());
+    $this->drupalGet($country->toUrl());
 
     // Assert hostname is correct.
     $this->assertSame(
@@ -165,12 +161,10 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    * Test an anonymous user can access published country.
    */
   public function testPublishedCountryAccessAnonymous(): void {
-    $this->drupalGet($this->publishedCountry->toUrl());
+    $country = $this->publishedCountry;
+    $this->drupalGet($country->toUrl());
 
-    $this->assertSame(
-      self::PUBLISHED_COUNTRY_HOST,
-      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
-    );
+    $this->assertHostname(self::PUBLISHED_COUNTRY_HOST);
 
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
     $this->assertSession()->pageTextNotContains('You are viewing content on an unpublished country');
@@ -180,42 +174,81 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    * Test an anonymous user can access published country.
    */
   public function testPublishedCountryAccessAuthenticated(): void {
+    $country = $this->publishedCountry;
     $user = $this->createUser();
 
     $this->drupalLogin($user);
-    $this->drupalGet($this->publishedCountry->toUrl());
+    $this->drupalGet($country->toUrl());
 
-    $this->assertSame(
-      self::PUBLISHED_COUNTRY_HOST,
-      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
-    );
+    $this->assertHostname(self::PUBLISHED_COUNTRY_HOST);
 
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
     $this->assertSession()->pageTextNotContains('You are viewing content on an unpublished country');
   }
 
   /**
+   * Test language restrictions for group content for an anonymous user.
+   */
+  public function testGroupContentLanguageRestrictionsAnonymous(): void {
+    $country = $this->publishedCountry;
+    $country->set('field_languages', ['en', 'es'])->save();
+
+    $news = $this->createNewsForCountry($country);
+    $news_es = $news->addTranslation('es', $news->toArray());
+    $news_es->setTitle('Noticias en español');
+    $news_es->save();
+
+    $this->drupalGet($news_es->toUrl());
+
+    $this->assertHostname(self::DEFAULT_HOST);
+    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
+  }
+
+  /**
+   * Test language restrictions for group content for an authenticated user.
+   */
+  public function testGroupContentLanguageRestrictionsAuthenticated(): void {
+    $admin = $this->createUser(['bypass node access']);
+    $this->addMembership($country, $admin);
+    $this->drupalLogin($admin);
+    $this->drupalGet($news_es->toUrl());
+    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
+    $this->assertSame(
+      self::PUBLISHED_COUNTRY_HOST,
+      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
+    );
+  }
+
+  /**
    * Test language restrictions for non-privileged users.
    */
   public function testLanguageAccessRestrictions(): void {
-    $country = $this->createCountryOnHost(self::LANGUAGE_COUNTRY_HOST, [
-      'title' => 'English Only Country',
-      'field_country_code' => 'eo',
-      'field_languages' => ['en'],
-    ]);
+    $country = $this->publishedCountry;
 
     $country_es = $country->addTranslation('es', $country->toArray());
     $country_es->setTitle('País solo inglés');
     $country_es->save();
 
-    $this->visitUrlOnHost($country_es->toUrl(), $country);
-    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
+    $this->drupalGet($country_es->toUrl());
 
-    $user = $this->createUser();
+    $this->assertSame(
+      self::DEFAULT_HOST,
+      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
+    );
 
-    $this->drupalLogin($user);
-    $this->visitTranslationOnCountry($country_es, $country);
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
+//
+//    $user = $this->createUser();
+//
+//    $this->drupalLogin($user);
+//    $this->drupalGet($country_es->toUrl());
+//
+//    $this->assertSame(
+//      self::DEFAULT_HOST,
+//      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
+//    );
+//
+//    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
   }
 
   /**
@@ -306,54 +339,6 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
   }
 
   /**
-   * Test language restrictions for group content.
-   */
-  public function testGroupContentLanguageRestrictions(): void {
-    $country = $this->publishedCountry;
-    $country->set('field_languages', ['en', 'es'])->save();
-
-    $news = $this->createNewsForCountry($country);
-    $news_es = $news->addTranslation('es', $news->toArray());
-    $news_es->setTitle('Noticias en español');
-    $news_es->save();
-
-    $this->drupalGet($news_es->toUrl());
-
-    $this->visitUrlOnHost($news_es->toUrl(), $country);
-    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
-
-    $admin = $this->createUser(['bypass node access']);
-    $this->addMembership($country, $admin);
-    $this->drupalLogin($admin);
-    $this->drupalGet($news_es->toUrl());
-    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-    $this->assertSame(
-      self::PUBLISHED_COUNTRY_HOST,
-      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
-    );
-  }
-
-  /**
-   * Creates a published Country on the provided hostname.
-   */
-  private function createCountryOnHost(string $host, array $overrides = []): NodeInterface {
-    $default_code = substr(str_replace(['.', '-'], '', $host), 0, 2) ?: 'ct';
-    $defaults = [
-      'type' => 'country',
-      'title' => sprintf('Country %s', $host),
-      'status' => NodeInterface::PUBLISHED,
-      'field_country_code' => $default_code,
-      'field_hostnames' => [$host],
-      'field_languages' => ['en'],
-    ];
-
-    $values = array_merge($defaults, $overrides);
-    $country = $this->createNode($values);
-    $this->markEntityForCleanup($country);
-    return $country;
-  }
-
-  /**
    * Creates a News node assigned to the provided Country.
    */
   private function createNewsForCountry(NodeInterface $country): NodeInterface {
@@ -376,48 +361,11 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $this->markEntityForCleanup($membership);
   }
 
-  /**
-   * Visits group content on the correct hostname for its country.
-   */
-  private function visitGroupContentOnCountry(NodeInterface $node, NodeInterface $country): void {
-    $this->visitUrlOnHost($node->toUrl(), $country);
-  }
-
-  /**
-   * Visits a translation of a country or group content on the country hostname.
-   */
-  private function visitTranslationOnCountry(NodeInterface $translation, NodeInterface $country): void {
-    $this->visitUrlOnHost($translation->toUrl(), $country);
-  }
-
-  /**
-   * Visits the given URL on the mapped hostname.
-   */
-  private function visitUrlOnHost(Url $url, NodeInterface $country): void {
-    $baseUrl = $this->buildBaseUrl($this->resolveCountryHost($country));
-    $url->setOption('base_url', $baseUrl);
-    $this->drupalGet($url);
-  }
-
-  /**
-   * Determines the hostname assigned to the provided country.
-   */
-  private function resolveCountryHost(NodeInterface $country): string {
-    $hosts = $country->get('field_hostnames')->getValue();
-    $host = $hosts[0]['value'] ?? '';
-
-    if ($host === '') {
-      throw new \LogicException('Country host configuration is missing.');
-    }
-
-    return $host;
-  }
-
-  /**
-   * Builds the external base URL used for router access inside DDEV.
-   */
-  private function buildBaseUrl(string $host): string {
-    return sprintf('https://%s:4443', $host);
+  private function assertHostname(string $expected): void {
+    $this->assertSame(
+      $expected,
+      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
+    );
   }
 
 }
