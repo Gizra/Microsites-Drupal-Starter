@@ -100,13 +100,17 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    */
   public function access(AccountInterface $account, NodeInterface $node): ?AccessResultInterface {
     // @todo Check if needed.
-    $is_admin_route = $this->adminContext->isAdminRoute();
+    $allowed_access = AccessResult::allowed()
+      ->addCacheContexts(['url.site', 'languages:language_interface']);
+    if ($this->adminContext->isAdminRoute()) {
+      return $allowed_access;
+    }
+
 
     $country = $this->ogContext->getGroup();
     // No country context resolved.
     if (empty($country) || !$country instanceof NodeInterface) {
-      return AccessResult::allowed()
-        ->addCacheContexts(['url.site', 'languages:language_interface']);
+      return $allowed_access;
     }
 
     $country_access = $country->access('view', $account, TRUE);
@@ -147,8 +151,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     }
 
     $this->redirectToCorrectHostname($country);
-    return AccessResult::allowed()
-      ->addCacheContexts(['url.site', 'languages:language_interface']);
+    return $allowed_access;
   }
 
   /**
