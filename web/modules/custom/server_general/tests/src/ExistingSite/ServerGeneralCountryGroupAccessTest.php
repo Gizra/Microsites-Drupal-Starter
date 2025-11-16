@@ -207,16 +207,25 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
   /**
    * Test language restrictions for group content for an authenticated user.
    */
-  public function testGroupContentLanguageRestrictionsAuthenticated(): void {
+  public function testGroupContentLanguageRestrictionsMember(): void {
+    $country = $this->publishedCountry;
+    $country->set('field_languages', ['en', 'es'])->save();
+
     $admin = $this->createUser(['bypass node access']);
     $this->addMembership($country, $admin);
     $this->drupalLogin($admin);
+
+    $news = $this->createNewsForCountry($country);
+    $news_es = $news->addTranslation('es', $news->toArray());
+    $news_es->setTitle('Noticias en español');
+    $news_es->save();
+
     $this->drupalGet($news_es->toUrl());
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-    $this->assertSame(
-      self::PUBLISHED_COUNTRY_HOST,
-      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
-    );
+    $this->assertHostname(self::PUBLISHED_COUNTRY_HOST);;
+
+    // @todo: Assert warning text.
+
   }
 
   /**
