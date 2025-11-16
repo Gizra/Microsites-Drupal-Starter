@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Drupal\server_general\Plugin\OgGroupResolver;
 
 use Drupal\Core\StringTranslation\TranslatableMarkup;
-use Drupal\node\NodeInterface;
 use Drupal\og\Attribute\OgGroupResolver;
 use Drupal\og\OgResolvedGroupCollectionInterface;
 use Drupal\og\OgRouteGroupResolverBase;

@@ -18,7 +18,6 @@ use Drupal\og\GroupTypeManagerInterface;
 use Drupal\og\MembershipManagerInterface;
 use Drupal\og\OgContextInterface;
 use Drupal\og\OgGroupAudienceHelperInterface;
-use Drupal\og\OgMembershipInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\RouteCollection;
 
@@ -74,7 +73,6 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     protected readonly RequestStack $requestStack,
     protected readonly MessengerInterface $messenger,
     protected readonly AdminContext $adminContext,
-    protected readonly EntityTypeManagerInterface $entityTypeManager,
   ) {}
 
   /**
@@ -90,45 +88,6 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
   }
 
   /**
-   * Redirect to the correct hostname if the node belongs to a different group.
-   *
-   * @param \Drupal\node\NodeInterface $node
-   *   The node being accessed.
-   */
-  protected function redirectToCorrectHostname(NodeInterface $country, NodeInterface $node): void {
-    $request = $this->requestStack->getCurrentRequest();
-
-    $current_hostname = $request->getHost();
-    $hostnames = $country->get('field_hostnames');
-    if ($hostnames->isEmpty()) {
-      return;
-    }
-
-    $correct_hostname = $hostnames->first()->getString();
-    // Already on correct hostname.
-    if (!$correct_hostname || $correct_hostname === $current_hostname) {
-      return;
-    }
-
-    // Validate hostname before redirect to prevent open redirects.
-    if (!filter_var($correct_hostname, FILTER_VALIDATE_DOMAIN)) {
-      \Drupal::logger('server_general')->warning('Invalid redirect hostname: @hostname', ['@hostname' => $correct_hostname]);
-      return;
-    }
-
-    // Perform redirect.
-    $redirect_url = $request->getScheme() . '://' . $correct_hostname;
-    if ($request->getPort() && !in_array($request->getPort(), [80, 443])) {
-      $redirect_url .= ':' . $request->getPort();
-    }
-    $redirect_url .= $request->getRequestUri();
-
-    $response = new TrustedRedirectResponse($redirect_url);
-    $response->send();
-    exit;
-  }
-
-  /**
    * Checks if the current node can be accessed based on hostname group context.
    *
    * @param \Drupal\Core\Session\AccountInterface $account
@@ -140,7 +99,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    *   The access result.
    */
   public function access(AccountInterface $account, NodeInterface $node): ?AccessResultInterface {
-    // @todo: Check if needed.
+    // @todo Check if needed.
     $is_admin_route = $this->adminContext->isAdminRoute();
 
     $country = $this->ogContext->getGroup();
@@ -153,7 +112,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     $country_access = $country->access('view', $account, TRUE);
     if (!$country_access->isAllowed()) {
       return AccessResult::forbidden('User has no access to country')
-        // @todo: per user
+        // @todo per user
         ->addCacheableDependency($country_access)
         ->addCacheableDependency($node);
     }
@@ -168,7 +127,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       $node_access = $node->access('view', $account, TRUE);
       if (!$node_access->isAllowed()) {
         return AccessResult::forbidden('User has no access to viewed node')
-          // @todo: per user
+          // @todo per user
           ->addCacheableDependency($country_access)
           ->addCacheableDependency($node);
       }
@@ -180,14 +139,14 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       }
     }
 
-    // @todo: Move to helper method.
+    // @todo Move to helper method?
     if (!$country->isPublished()) {
       $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
         '@title' => $country->label(),
       ]));
     }
 
-    $this->redirectToCorrectHostname($country, $node);
+    $this->redirectToCorrectHostname($country);
     return AccessResult::allowed()
       ->addCacheContexts(['url.site', 'languages:language_interface']);
   }
@@ -223,7 +182,6 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       return NULL;
     }
 
-
     if (!$this->membershipManager->isMember($country, $account->id())) {
       // Language is not available for regular users.
       return AccessResult::forbidden('This language is not available for the current country context')
@@ -238,8 +196,46 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       '@language' => $language->getName(),
     ]));
 
-
     return NULL;
+  }
+
+  /**
+   * Redirect to the correct hostname if the node belongs to a different group.
+   *
+   * @param \Drupal\node\NodeInterface $country
+   *   The Country node.
+   */
+  protected function redirectToCorrectHostname(NodeInterface $country): void {
+    $request = $this->requestStack->getCurrentRequest();
+
+    $current_hostname = $request->getHost();
+    $hostnames = $country->get('field_hostnames');
+    if ($hostnames->isEmpty()) {
+      return;
+    }
+
+    $correct_hostname = $hostnames->first()->getString();
+    // Already on correct hostname.
+    if (!$correct_hostname || $correct_hostname === $current_hostname) {
+      return;
+    }
+
+    // Validate hostname before redirect to prevent open redirects.
+    if (!filter_var($correct_hostname, FILTER_VALIDATE_DOMAIN)) {
+      \Drupal::logger('server_general')->warning('Invalid redirect hostname: @hostname', ['@hostname' => $correct_hostname]);
+      return;
+    }
+
+    // Perform redirect.
+    $redirect_url = $request->getScheme() . '://' . $correct_hostname;
+    if ($request->getPort() && !in_array($request->getPort(), [80, 443])) {
+      $redirect_url .= ':' . $request->getPort();
+    }
+    $redirect_url .= $request->getRequestUri();
+
+    $response = new TrustedRedirectResponse($redirect_url);
+    $response->send();
+    exit;
   }
 
 }

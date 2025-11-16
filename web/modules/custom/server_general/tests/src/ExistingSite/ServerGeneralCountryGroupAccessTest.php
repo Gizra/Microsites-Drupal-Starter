@@ -6,7 +6,6 @@ namespace Drupal\Tests\server_general\ExistingSite;
 
 use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
-use League\Csv\Exception;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -121,12 +120,13 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $access_handler = \Drupal::entityTypeManager()->getAccessControlHandler('node');
     $this->assertTrue($access_handler->access($this->unpublishedCountry, 'view', $member));
   }
+
   /**
    * Test that non-members cannot access unpublished country.
    */
   public function testUnpublishedCountryAccessNonMember(): void {
     $user = $this->createUser();
-    
+
     $this->drupalLogin($user);
 
     $this->visitCountry($this->unpublishedCountry);
@@ -141,12 +141,13 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
 
     $user = $this->createUser();
-    
+
     $this->drupalLogin($user);
     $this->visitCountry($this->publishedCountry);
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
     $this->assertSession()->pageTextNotContains('You are viewing content on an unpublished country');
   }
+
   /**
    * Test language restrictions for non-privileged users.
    */
@@ -165,7 +166,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
 
     $user = $this->createUser();
-    
+
     $this->drupalLogin($user);
     $this->visitTranslationOnCountry($country_es, $country);
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
@@ -194,6 +195,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $this->assertSession()->pageTextContains('You are viewing content in a language');
     $this->assertSession()->pageTextContains('that is not enabled for this country');
   }
+
   /**
    * Test group content access on unpublished country.
    */
@@ -204,7 +206,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
 
     $user = $this->createUser();
-    
+
     $this->drupalLogin($user);
     $this->visitGroupContentOnCountry($news, $this->unpublishedCountry);
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
@@ -239,6 +241,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
     $this->assertSession()->pageTextContains('You are viewing unpublished content');
   }
+
   /**
    * Test that admin routes allow access even for unpublished countries.
    */
