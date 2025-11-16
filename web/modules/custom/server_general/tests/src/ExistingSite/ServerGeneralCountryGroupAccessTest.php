@@ -162,16 +162,34 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
   }
 
   /**
-   * Test that all users can access published country.
+   * Test an anonymous user can access published country.
    */
-  public function testPublishedCountryAccess(): void {
-    $this->visitCountry($this->publishedCountry);
-    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
+  public function testPublishedCountryAccessAnonymous(): void {
+    $this->drupalGet($this->publishedCountry->toUrl());
 
+    $this->assertSame(
+      self::PUBLISHED_COUNTRY_HOST,
+      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
+    );
+
+    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
+    $this->assertSession()->pageTextNotContains('You are viewing content on an unpublished country');
+  }
+
+  /**
+   * Test an anonymous user can access published country.
+   */
+  public function testPublishedCountryAccessAuthenticated(): void {
     $user = $this->createUser();
 
     $this->drupalLogin($user);
-    $this->visitCountry($this->publishedCountry);
+    $this->drupalGet($this->publishedCountry->toUrl());
+
+    $this->assertSame(
+      self::PUBLISHED_COUNTRY_HOST,
+      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
+    );
+
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
     $this->assertSession()->pageTextNotContains('You are viewing content on an unpublished country');
   }
@@ -313,13 +331,6 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
       self::PUBLISHED_COUNTRY_HOST,
       parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
     );
-  }
-
-  /**
-   * Visits the given country's canonical URL on the mapped hostname.
-   */
-  private function visitCountry(NodeInterface $country): void {
-    $this->visitUrlOnHost($country->toUrl(), $country);
   }
 
   /**
