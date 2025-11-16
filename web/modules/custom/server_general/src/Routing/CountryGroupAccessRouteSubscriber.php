@@ -95,19 +95,10 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    * @param \Drupal\node\NodeInterface $node
    *   The node being accessed.
    */
-  protected function redirectToCorrectHostname(NodeInterface $node): void {
+  protected function redirectToCorrectHostname(NodeInterface $country, NodeInterface $node): void {
     $request = $this->requestStack->getCurrentRequest();
-    if (!$request) {
-      return;
-    }
 
     $current_hostname = $request->getHost();
-    $country = $this->resolveCountry($node);
-
-    if (!$country) {
-      return;
-    }
-
     $hostnames = $country->get('field_hostnames');
     if ($hostnames->isEmpty()) {
       return;
@@ -152,11 +143,11 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     // @todo: Check if needed.
     $is_admin_route = $this->adminContext->isAdminRoute();
 
-
     $country = $this->ogContext->getGroup();
     // No country context resolved.
     if (empty($country) || !$country instanceof NodeInterface) {
-      return AccessResult::neutral();
+      return AccessResult::allowed()
+        ->addCacheContexts(['url.site', 'languages:language_interface']);
     }
 
     $country_access = $country->access('view', $account, TRUE);
@@ -168,7 +159,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     }
 
     $language_access = $this->checkLanguageAccess($node, $country, $account);
-    if ($language_access->isForbidden()) {
+    if ($language_access instanceof AccessResultInterface && $language_access->isForbidden()) {
       return $language_access;
     }
 
@@ -196,7 +187,9 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       ]));
     }
 
-    return $this->redirectToCorrectHostname($node);
+    $this->redirectToCorrectHostname($country, $node);
+    return AccessResult::allowed()
+      ->addCacheContexts(['url.site', 'languages:language_interface']);
   }
 
   /**
@@ -236,7 +229,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       return AccessResult::forbidden('This language is not available for the current country context')
         ->addCacheableDependency($node)
         ->addCacheableDependency($country)
-        ->addCacheContexts(['url.site', 'languages:language_interface', 'user.permissions']);
+        ->addCacheContexts(['url.site', 'languages:language_interface']);
     }
 
     // Language is not enabled but allow group member to access.
