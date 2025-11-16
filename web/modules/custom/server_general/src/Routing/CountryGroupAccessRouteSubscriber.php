@@ -99,13 +99,13 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    *   The access result.
    */
   public function access(AccountInterface $account, NodeInterface $node): ?AccessResultInterface {
-    // @todo Check if needed.
     $allowed_access = AccessResult::allowed()
       ->addCacheContexts(['url.site', 'languages:language_interface']);
+
     if ($this->adminContext->isAdminRoute()) {
+      // Skip access checks for admin routes.
       return $allowed_access;
     }
-
 
     $country = $this->ogContext->getGroup();
     // No country context resolved.

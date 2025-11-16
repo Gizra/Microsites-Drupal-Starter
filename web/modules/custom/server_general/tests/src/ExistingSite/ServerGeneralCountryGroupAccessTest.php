@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
  * Test Country group access control and hostname-based restrictions.
  */
 class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
+  private const DEFAULT_HOST = 'microsites-drupal-starter.ddev.site';
 
   private const UNPUBLISHED_COUNTRY_HOST = 'unpublished-country.microsites-drupal-starter.ddev.site';
   private const PUBLISHED_COUNTRY_HOST = 'published-country.microsites-drupal-starter.ddev.site';
@@ -58,7 +59,14 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    */
   public function testUnpublishedCountryAccessAnonymous(): void {
     // Anonymous user should get forbidden accessing the country node.
-    $this->visitCountry($this->unpublishedCountry);
+    $this->drupalGet($this->unpublishedCountry->toUrl());
+
+    // Assert hostname wasn't changed.
+    $this->assertSame(
+      self::DEFAULT_HOST,
+      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
+    );
+
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
   }
 
@@ -70,7 +78,13 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $admin = $this->createUser([], NULL, TRUE);
     $this->drupalLogin($admin);
 
-    $this->visitCountry($this->unpublishedCountry);
+    $this->drupalGet($this->unpublishedCountry->toUrl());
+
+    // Assert hostname is correct.
+    $this->assertSame(
+      self::UNPUBLISHED_COUNTRY_HOST,
+      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
+    );
 
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
     // Should show warning.
@@ -82,7 +96,6 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    */
   public function testUnpublishedCountryAccessNonPrivilegedGroupMember(): void {
     $member = $this->createUser();
-    $this->markEntityForCleanup($member);
     $this->assertFalse($member->hasPermission('bypass node access'));
 
     /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
@@ -94,7 +107,14 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $this->assertTrue($membership_manager->isMember($this->unpublishedCountry, $member->id()), 'Member should belong to unpublished country.');
 
     $this->drupalLogin($member);
-    $this->visitCountry($this->unpublishedCountry);
+    $this->drupalGet($this->unpublishedCountry->toUrl());
+
+    // Assert hostname is correct.
+    $this->assertSame(
+      self::UNPUBLISHED_COUNTRY_HOST,
+      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
+    );
+
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
     // Should show warning for group members too.
     $this->assertSession()->pageTextContains('You are viewing content on an unpublished country');
@@ -102,14 +122,15 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
 
   /**
    * Test hook_node_access grants access to members on hostname context.
+   *
+   * @todo: Remove? OR extend?
    */
   public function testNodeAccessAllowsGroupMemberOnHostname(): void {
-    $member = $this->createUser();
-    $this->markEntityForCleanup($member);
+    $user = $this->createUser();
 
     /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
     $membership_manager = \Drupal::service('og.membership_manager');
-    $membership = $membership_manager->createMembership($this->unpublishedCountry, $member);
+    $membership = $membership_manager->createMembership($this->unpublishedCountry, $user);
     $membership->save();
     $this->markEntityForCleanup($membership);
 
@@ -118,7 +139,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $request_stack->push($request);
 
     $access_handler = \Drupal::entityTypeManager()->getAccessControlHandler('node');
-    $this->assertTrue($access_handler->access($this->unpublishedCountry, 'view', $member));
+    $this->assertTrue($access_handler->access($this->unpublishedCountry, 'view', $user));
   }
 
   /**
@@ -129,7 +150,14 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
 
     $this->drupalLogin($user);
 
-    $this->visitCountry($this->unpublishedCountry);
+    $this->drupalGet($this->unpublishedCountry->toUrl());
+
+    // Assert hostname is correct.
+    $this->assertSame(
+      self::DEFAULT_HOST,
+      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
+    );
+
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
   }
 
