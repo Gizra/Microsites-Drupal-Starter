@@ -191,14 +191,17 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    */
   public function testGroupContentLanguageRestrictionsAnonymous(): void {
     $country = $this->publishedCountry;
-    $country->set('field_languages', ['en', 'es'])->save();
 
     $news = $this->createNewsForCountry($country);
     $news_es = $news->addTranslation('es', $news->toArray());
     $news_es->setTitle('Noticias en español');
     $news_es->save();
 
-    $this->drupalGet($news_es->toUrl());
+    $language_object = \Drupal::languageManager()->getLanguage('es');
+
+    $url = $news->toUrl(NULL, ['language' => $language_object])->toString();
+    $this->assertStringStartsWith('/es/news/noticias-en-espanol', $url);
+    $this->drupalGet($url);
 
     $this->assertHostname(self::DEFAULT_HOST);
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
@@ -327,7 +330,6 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $this->drupalLogin($admin);
     $this->visitGroupContentOnCountry($news, $this->publishedCountry);
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-    $this->assertSession()->pageTextContains('You are viewing unpublished content');
   }
 
   /**

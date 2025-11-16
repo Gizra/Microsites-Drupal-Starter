@@ -135,12 +135,6 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
           ->addCacheableDependency($country_access)
           ->addCacheableDependency($node);
       }
-
-      if (!$node->isPublished()) {
-        $this->messenger->addWarning($this->t('You are viewing unpublished content: @title', [
-          '@title' => $node->label(),
-        ]));
-      }
     }
 
     // @todo Move to helper method?
