@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\server_general\ExistingSite;
 
-use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
+use Drupal\user\UserInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
 /**
  * Test Country group access control and hostname-based restrictions.
@@ -28,7 +27,6 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
    * The published country fixture.
    */
   protected NodeInterface $publishedCountry;
-
 
   /**
    * {@inheritdoc}
@@ -118,7 +116,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
   /**
    * Test hook_node_access grants access to members on hostname context.
    *
-   * @todo: Remove? OR extend?
+   * @todo Remove? OR extend?
    */
   public function testNodeAccessAllowsGroupMemberOnHostname(): void {
     $country = $this->unpublishedCountry;
@@ -267,6 +265,9 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
 
   /**
    * Creates a News node assigned to the provided Country.
+   *
+   * @param \Drupal\node\NodeInterface $country
+   *   The country node.
    */
   private function createNewsForCountry(NodeInterface $country): NodeInterface {
     return $this->createNode([
@@ -280,8 +281,13 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
 
   /**
    * Adds an OG membership for the provided account on the country.
+   *
+   * @param \Drupal\node\NodeInterface $country
+   *   The country node.
+   * @param \Drupal\user\UserInterface $account
+   *   The user account.
    */
-  private function addMembership(NodeInterface $country, $account): void {
+  private function addMembership(NodeInterface $country, UserInterface $account): void {
     /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
     $membership_manager = \Drupal::service('og.membership_manager');
     $membership = $membership_manager->createMembership($country, $account);
@@ -289,6 +295,12 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $this->markEntityForCleanup($membership);
   }
 
+  /**
+   * Asserts that the current hostname matches the expected.
+   *
+   * @param string $expected
+   *   The expected hostname.
+   */
   private function assertHostname(string $expected): void {
     $this->assertSame(
       $expected,
