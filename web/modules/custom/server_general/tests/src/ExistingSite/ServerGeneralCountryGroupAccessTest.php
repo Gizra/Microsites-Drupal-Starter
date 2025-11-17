@@ -6,7 +6,6 @@ namespace Drupal\Tests\server_general\ExistingSite;
 
 use Drupal\node\NodeInterface;
 use Drupal\user\UserInterface;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -111,7 +110,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     // Should show warning for group members too.
     $this->assertSession()->pageTextContains('You are viewing content on an unpublished country');
   }
-  
+
   /**
    * Test that non-members cannot access unpublished country.
    */
