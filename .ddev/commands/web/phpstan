@@ -6,7 +6,7 @@
 
 if [ $# -eq 0 ]; then
   # No arguments provided, run default analyse command
-  PHP_MEMORY_LIMIT=2G ./vendor/bin/phpstan --no-progress analyse -c phpstan.neon
+  PHP_MEMORY_LIMIT=2G ./vendor/bin/phpstan analyse -c phpstan.neon
 else
   # Arguments provided, pass them through with configuration
   PHP_MEMORY_LIMIT=2G ./vendor/bin/phpstan "$@" -c phpstan.neon

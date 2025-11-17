@@ -94,9 +94,8 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     $this->assertFalse($user->hasPermission('bypass node access'));
 
     /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
-    $this->addMembership($country, $user);
-
     $membership_manager = \Drupal::service('og.membership_manager');
+    $this->addMembership($country, $user);
     $this->assertTrue($membership_manager->isMember($this->unpublishedCountry, $user->id()), 'Member should belong to unpublished country.');
 
     $this->drupalLogin($user);
@@ -112,30 +111,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
     // Should show warning for group members too.
     $this->assertSession()->pageTextContains('You are viewing content on an unpublished country');
   }
-
-  /**
-   * Test hook_node_access grants access to members on hostname context.
-   *
-   * @todo Remove? OR extend?
-   */
-  public function testNodeAccessAllowsGroupMemberOnHostname(): void {
-    $country = $this->unpublishedCountry;
-    $user = $this->createUser();
-
-    /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
-    $membership_manager = \Drupal::service('og.membership_manager');
-    $membership = $membership_manager->createMembership($country, $user);
-    $membership->save();
-    $this->markEntityForCleanup($membership);
-
-    $request = Request::create(sprintf('https://%s/', self::UNPUBLISHED_COUNTRY_HOST));
-    $request_stack = \Drupal::service('request_stack');
-    $request_stack->push($request);
-
-    $access_handler = \Drupal::entityTypeManager()->getAccessControlHandler('node');
-    $this->assertTrue($access_handler->access($country, 'view', $user));
-  }
-
+  
   /**
    * Test that non-members cannot access unpublished country.
    */

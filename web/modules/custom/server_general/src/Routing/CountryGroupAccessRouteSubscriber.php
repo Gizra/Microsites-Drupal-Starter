@@ -94,10 +94,10 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    * @param \Drupal\node\NodeInterface $node
    *   The node to check access for.
    *
-   * @return \Drupal\Core\Access\AccessResultInterface|null
+   * @return \Drupal\Core\Access\AccessResultInterface
    *   The access result.
    */
-  public function access(AccountInterface $account, NodeInterface $node): ?AccessResultInterface {
+  public function access(AccountInterface $account, NodeInterface $node): AccessResultInterface {
     $allowed_access = AccessResult::allowed()
       ->addCacheContexts(['url.site', 'languages:language_interface']);
 
@@ -121,7 +121,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     }
 
     $language_access = $this->checkLanguageAccess($node, $country, $account);
-    if ($language_access instanceof AccessResultInterface && $language_access->isForbidden()) {
+    if ($language_access->isForbidden()) {
       return $language_access;
     }
 
@@ -157,8 +157,8 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
    * @param \Drupal\Core\Session\AccountInterface $account
    *   The account to check access for.
    *
-   * @return \Drupal\Core\Access\AccessResultInterface|null
-   *   Returns forbidden if language is not allowed, null if check should be
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   Returns forbidden if language is not allowed, neutral if check should be
    *   skipped or language is allowed.
    */
   protected function checkLanguageAccess(NodeInterface $node, NodeInterface $country, AccountInterface $account): AccessResultInterface {
