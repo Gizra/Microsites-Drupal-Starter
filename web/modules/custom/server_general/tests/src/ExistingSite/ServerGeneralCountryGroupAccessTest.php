@@ -211,31 +211,39 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
   }
 
   /**
-   * Test language restrictions for group content for an authenticated user.
+   * Test language restrictions for group content for privileged users.
    */
-  public function testGroupContentLanguageRestrictionsMember(): void {
+  public function testGroupContentLanguageRestrictionsAuthenticated(): void {
     $country = $this->publishedCountry;
 
-    $user = $this->createUser();
-    $this->addMembership($country, $user);
-    $this->drupalLogin($user);
+    // Am admin user.
+    $admin = $this->createUser(['bypass node access']);
 
-    $news = $this->createNewsForCountry($country);
-    $news_es = $news->addTranslation('es', $news->toArray());
-    $news_es->setTitle('Noticias en español');
-    $news_es->save();
+    // A group member user.
+    $member = $this->createUser();
+    $this->addMembership($country, $member);
 
-    // As we return a 403, this causes a ResourceNotFoundException in the test.
-    // Drupal logs the ResourceNotFoundException raised during the redirect as a
-    // PHP watchdog entry, so disable the watchdog assertion for this test.
-    $this->failOnPhpWatchdogMessages = FALSE;
-    $this->drupalGet($news->toUrl(NULL, ['language' => \Drupal::languageManager()->getLanguage('es')]));
+    foreach ([$admin, $member] as $user) {
+      $this->drupalLogin($user);
 
-    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-    $this->assertHostname(self::PUBLISHED_COUNTRY_HOST);
+      $news = $this->createNewsForCountry($country);
+      $news_es = $news->addTranslation('es', $news->toArray());
+      $news_es->setTitle('Noticias en español');
+      $news_es->save();
 
-    // Assert warning text.
-    $this->assertSession()->pageTextContainsOnce('You are viewing content in a language (Spanish) that is not enabled for this country.');
+      // As we return a 403, this causes a ResourceNotFoundException in the
+      // test. Drupal logs the ResourceNotFoundException raised during the
+      // redirect as a PHP watchdog entry, so disable the watchdog assertion for
+      // this test.
+      $this->failOnPhpWatchdogMessages = FALSE;
+      $this->drupalGet($news->toUrl(NULL, ['language' => \Drupal::languageManager()->getLanguage('es')]));
+
+      $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
+      $this->assertHostname(self::PUBLISHED_COUNTRY_HOST);
+
+      // Assert warning text.
+      $this->assertSession()->pageTextContainsOnce('You are viewing content in a language (Spanish) that is not enabled for this country.');
+    }
   }
 
   /**
