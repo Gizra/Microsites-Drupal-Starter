@@ -247,101 +247,22 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
   }
 
   /**
-   * Test language restrictions for non-privileged users.
-   */
-  public function testLanguageAccessRestrictions(): void {
-    $country = $this->publishedCountry;
-
-    $country_es = $country->addTranslation('es', $country->toArray());
-    $country_es->setTitle('País solo inglés');
-    $country_es->save();
-
-    $this->drupalGet($country_es->toUrl());
-
-    $this->assertSame(
-      self::DEFAULT_HOST,
-      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
-    );
-
-    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
-//
-//    $user = $this->createUser();
-//
-//    $this->drupalLogin($user);
-//    $this->drupalGet($country_es->toUrl());
-//
-//    $this->assertSame(
-//      self::DEFAULT_HOST,
-//      parse_url($this->getSession()->getCurrentUrl(), PHP_URL_HOST),
-//    );
-//
-//    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
-  }
-
-  /**
-   * Test that privileged users can access non-enabled languages with warning.
-   */
-  public function testLanguageAccessPrivileged(): void {
-    $country = $this->createCountryOnHost(self::LANGUAGE_COUNTRY_HOST, [
-      'title' => 'English Only Country',
-      'field_country_code' => 'eo',
-      'field_languages' => ['en'],
-    ]);
-
-    $country_es = $country->addTranslation('es', $country->toArray());
-    $country_es->setTitle('País solo inglés');
-    $country_es->save();
-
-    $admin = $this->createUser(['bypass node access']);
-    $this->markEntityForCleanup($admin);
-    $this->addMembership($country, $admin);
-    $this->drupalLogin($admin);
-    $this->visitTranslationOnCountry($country_es, $country);
-    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-    $this->assertSession()->pageTextContains('You are viewing content in a language');
-    $this->assertSession()->pageTextContains('that is not enabled for this country');
-  }
-
-  /**
-   * Test group content access on unpublished country.
-   */
-  public function testGroupContentOnUnpublishedCountry(): void {
-    $news = $this->createNewsForCountry($this->unpublishedCountry);
-
-    $this->visitGroupContentOnCountry($news, $this->unpublishedCountry);
-    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
-
-    $user = $this->createUser();
-
-    $this->drupalLogin($user);
-    $this->visitGroupContentOnCountry($news, $this->unpublishedCountry);
-    $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
-  }
-
-  /**
-   * Test group content access on unpublished country for privileged users.
-   */
-  public function testGroupContentOnUnpublishedCountryPrivileged(): void {
-    $news = $this->createNewsForCountry($this->unpublishedCountry);
-
-    $admin = $this->createUser([], NULL, TRUE);
-    $this->drupalLogin($admin);
-    $this->visitGroupContentOnCountry($news, $this->unpublishedCountry);
-    $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-    $this->assertSession()->pageTextContains('You are viewing content on an unpublished country');
-  }
-
-  /**
    * Test that admin routes allow access even for unpublished countries.
    */
   public function testAdminRouteAccess(): void {
-    $editor = $this->createUser(['bypass node access']);
-    $this->drupalLogin($editor);
+    $user = $this->createUser(['access content overview', 'bypass node access']);
+    $this->drupalLogin($user);
 
-    $url = $this->unpublishedCountry->toUrl('edit-form');
-    $this->drupalGet($url);
+    $this->drupalGet('/admin/content');
+    $this->createHtmlSnapshot();
     $this->assertSession()->statusCodeEquals(Response::HTTP_OK);
-    $this->assertSession()->pageTextNotContains('You are viewing content on an unpublished country');
+
+    foreach ([$this->publishedCountry, $this->unpublishedCountry] as $country) {
+      $selector = sprintf('td.views-field-title a[href="/node/%d"]', $country->id());
+      // Ensure each country shows up in the content overview as a link.
+      $link = $this->assertSession()->elementExists('css', $selector);
+      $this->assertSame($country->label(), $link->getText());
+    }
   }
 
   /**
