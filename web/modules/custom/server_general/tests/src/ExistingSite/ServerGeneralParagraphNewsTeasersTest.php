@@ -80,7 +80,6 @@ class ServerGeneralParagraphNewsTeasersTest extends ServerGeneralParagraphTestBa
       'og_audience' => ['target_id' => $country->id()],
     ]);
 
-
     $this->drupalGet($landing_page_node->toUrl());
 
     $this->assertSession()->elementNotExists('css', '.node--type-news.node--view-mode-teaser .field--name-field-body h3');
