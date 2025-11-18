@@ -148,6 +148,16 @@ function server_general_node_access(NodeInterface $entity, string $op, AccountIn
 
 /**
  * Determines access when browsing a Country on its hostname.
+ *
+ * @param \Drupal\node\NodeInterface $entity
+ *  The node entity.
+ * @param string $op
+ *  The operation.
+ * @param \Drupal\Core\Session\AccountInterface $account
+ *  The user account.
+ *
+ * @return \Drupal\Core\Access\AccessResultInterface
+ *  The access result.
  */
 function _server_general_node_access_country_hostname(NodeInterface $entity, string $op, AccountInterface $account): AccessResultInterface {
   if ($op !== 'view' || $entity->bundle() !== 'country' || $entity->isPublished()) {
