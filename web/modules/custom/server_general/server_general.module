@@ -198,6 +198,7 @@ function _server_general_node_access_locked_pages(NodeInterface $entity, string 
   $main_settings = $locked_pages_service->getMainSettings();
   if ($op === 'delete' && $main_settings instanceof ConfigPages && $locked_pages_service->isNodeLocked($entity)) {
     $cache_tags = $main_settings->getCacheTags();
+
     return AccessResult::forbidden()
       ->addCacheableDependency($entity)
       ->addCacheTags($cache_tags);
