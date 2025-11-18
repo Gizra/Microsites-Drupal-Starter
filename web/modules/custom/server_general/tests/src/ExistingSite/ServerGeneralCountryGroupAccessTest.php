@@ -13,7 +13,6 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
   private const DEFAULT_HOST = 'microsites-drupal-starter.ddev.site';
-
   private const UNPUBLISHED_COUNTRY_HOST = 'unpublished-country.microsites-drupal-starter.ddev.site';
   private const PUBLISHED_COUNTRY_HOST = 'published-country.microsites-drupal-starter.ddev.site';
 

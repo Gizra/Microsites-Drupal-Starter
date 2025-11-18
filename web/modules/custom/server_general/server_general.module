@@ -347,7 +347,7 @@ function _server_general_disable_og_audience_field(array &$form, NodeInterface $
     return;
   }
 
-  $form['og_audience']['#access'] = FALSE;
+  // $form['og_audience']['#access'] = FALSE;
 }
 
 /**
