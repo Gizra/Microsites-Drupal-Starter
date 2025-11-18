@@ -6,27 +6,16 @@ use Drupal\node\NodeInterface;
 use Drupal\Tests\server_general\Traits\ParagraphCreationTrait;
 
 /**
- * Tests for the Homepage.
+ * Tests for the Related content carousel.
  */
-class ServerGeneralHomepageTest extends ServerGeneralSelenium2TestBase {
+class ServerGeneralRelatedContentFeaturedTest extends ServerGeneralSelenium2TestBase {
 
   use ParagraphCreationTrait;
 
-  private const PUBLISHED_COUNTRY_HOST = 'published-country.microsites-drupal-starter.ddev.site';
-
   /**
-   * Test the featured content carousel on homepage.
+   * Test the featured content carousel.
    */
-  public function testHomeFeaturedContent() {
-    $country = $this->createNode([
-      'type' => 'country',
-      'title' => 'Test Country',
-      'status' => NodeInterface::PUBLISHED,
-      'field_country_code' => 'tc',
-      'field_hostnames' => [self::PUBLISHED_COUNTRY_HOST],
-      'field_languages' => ['en'],
-    ]);
-
+  public function testFeaturedContent() {
     $first_news_title = 'News item 1';
     $second_news_title = 'News item 2';
 
@@ -35,7 +24,6 @@ class ServerGeneralHomepageTest extends ServerGeneralSelenium2TestBase {
       'title' => $first_news_title,
       'status' => NodeInterface::PUBLISHED,
       'moderation_state' => 'published',
-      'og_audience' => ['target_id' => $country->id()],
     ]);
 
     $second_news = $this->createNode([
@@ -43,7 +31,6 @@ class ServerGeneralHomepageTest extends ServerGeneralSelenium2TestBase {
       'title' => $second_news_title,
       'status' => NodeInterface::PUBLISHED,
       'moderation_state' => 'published',
-      'og_audience' => ['target_id' => $country->id()],
     ]);
 
     $featured_content_paragraph = $this->createParagraph([
@@ -64,9 +51,9 @@ class ServerGeneralHomepageTest extends ServerGeneralSelenium2TestBase {
       'field_paragraphs' => [
         [
           'target_id' => $featured_content_paragraph->id(),
+          'target_revision_id' => $featured_content_paragraph->getRevisionId(),
         ],
       ],
-      'og_audience' => ['target_id' => $country->id()],
     ]);
 
     $this->drupalGet($landing_page->toUrl());
