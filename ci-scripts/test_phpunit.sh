@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-ddev phpunit
+# --testdox keeps output flowing so Travis doesn't think the build is stuck.
+ddev phpunit --testdox
