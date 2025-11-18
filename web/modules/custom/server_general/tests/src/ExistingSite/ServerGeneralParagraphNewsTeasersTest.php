@@ -62,6 +62,7 @@ class ServerGeneralParagraphNewsTeasersTest extends ServerGeneralParagraphTestBa
       'field_paragraphs' => [
         $paragraph,
       ],
+      'og_audience' => ['target_id' => $country->id()],
     ]);
 
     // Create node.news with allowed and disallowed html tags in field_body.
@@ -80,7 +81,7 @@ class ServerGeneralParagraphNewsTeasersTest extends ServerGeneralParagraphTestBa
     ]);
 
 
-    $this->drupalGet($country->toUrl());
+    $this->drupalGet($landing_page_node->toUrl());
 
     $this->assertSession()->elementNotExists('css', '.node--type-news.node--view-mode-teaser .field--name-field-body h3');
     $this->assertSession()->elementExists('css', '.node--type-news.node--view-mode-teaser .field--name-field-body strong');
