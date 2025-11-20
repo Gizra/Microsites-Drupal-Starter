@@ -97,7 +97,7 @@ jobs:
       - name: Setup DDEV
         uses: ddev/github-action-setup-ddev@v1
         with:
-          version: v1.24.1
+          version: 1.24.1
 
       - name: Configure DDEV and install project dependencies
         run: ./ci-scripts/install_ddev.sh
