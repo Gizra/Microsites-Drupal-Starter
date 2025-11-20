@@ -54,10 +54,10 @@ ensure_rollbar_excluded() {
 if [ $# -eq 0 ]; then
   # If no arguments are provided, run most tests in parallel, sequential group tests separately
   echo "Running tests in parallel (excluding sequential group)..."
-  PHP_MEMORY_LIMIT=2G ./vendor/bin/paratest -c phpunit.xml.dist --exclude-group=Rollbar,sequential
+  PHP_MEMORY_LIMIT=2G ./vendor/bin/paratest -c phpunit.xml.dist --exclude-group=Rollbar,sequential --testdox
   
   echo "Running sequential group tests..."
-  PHP_MEMORY_LIMIT=2G ./vendor/bin/phpunit -c phpunit.xml.dist --exclude-group=Rollbar --group=sequential
+  PHP_MEMORY_LIMIT=2G ./vendor/bin/phpunit -c phpunit.xml.dist --exclude-group=Rollbar --group=sequential --testdox
 else
   # Ensure Rollbar is always excluded
   ARGS=$(ensure_rollbar_excluded "$*")
