@@ -2,6 +2,8 @@ name: CI
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 permissions:
@@ -97,7 +99,7 @@ jobs:
       - name: Setup DDEV
         uses: ddev/github-action-setup-ddev@v1
         with:
-          version: 1.24.1
+          version: 1.24.10
 
       - name: Configure DDEV and install project dependencies
         run: ./ci-scripts/install_ddev.sh
