@@ -136,7 +136,6 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       }
     }
 
-    // @todo Move to helper method?
     if (!$country->isPublished()) {
       $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
         '@title' => $country->label(),
