@@ -12,7 +12,7 @@ default:
       value: AdminTwo
   pass:
     -
-      value: $2y$10$73RqKYnefLug2A44F.iub.p00WjhYlgtEYLDpyx30zNjKcrDRg0C2
+      value: U$S$EYrIiHXNE11U.O5vDAkXhIieC7R.B6XMIzCkjuzAeo033ZkWlvoS
       existing: ''
       pre_hashed: false
   mail:
@@ -29,10 +29,10 @@ default:
       value: 1686167785
   access:
     -
-      value: 1761832138
+      value: 0
   login:
     -
-      value: 1761720833
+      value: 0
   roles:
     -
       target_id: administrator
@@ -51,7 +51,7 @@ default:
       tag: link
       attributes:
         rel: canonical
-        href: 'https://microsites-drupal-starter.ddev.site:4443/user/4'
+        href: 'https://drupal-starter.ddev.site:4443/user/4'
   path:
     -
       alias: ''
@@ -59,7 +59,7 @@ default:
       pathauto: 1
   field_last_password_reset:
     -
-      value: '2025-10-26T15:14:45'
+      value: '2024-11-21T22:24:35'
   field_password_expiration:
     -
       value: false

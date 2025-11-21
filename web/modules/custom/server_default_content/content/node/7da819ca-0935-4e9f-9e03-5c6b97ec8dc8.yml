@@ -44,12 +44,7 @@ default:
       tag: link
       attributes:
         rel: canonical
-        href: 'https://microsites-drupal-starter.ddev.site:4443/404'
-    -
-      tag: meta
-      attributes:
-        property: 'og:title'
-        content: '404'
+        href: 'https://drupal-starter.ddev.site:4443/404'
   path:
     -
       alias: /404

@@ -12,7 +12,7 @@ default:
       value: Editor
   pass:
     -
-      value: $2y$10$gN1LXb/21gkEPlJ83Z6V3.NhXUwe8rfWLP.zjbyl974KUNVsto9U.
+      value: U$S$EfohMIgA/nac9/3aphs7QYR91xfq3SKuH/EDmykjGwoJPLICTOo2
       existing: ''
       pre_hashed: false
   mail:
@@ -51,7 +51,7 @@ default:
       tag: link
       attributes:
         rel: canonical
-        href: 'https://microsites-drupal-starter.ddev.site:4443/user/5'
+        href: 'https://drupal-starter.ddev.site:4443/user/5'
   path:
     -
       alias: ''
@@ -59,7 +59,7 @@ default:
       pathauto: 1
   field_last_password_reset:
     -
-      value: '2025-10-26T15:14:45'
+      value: '2024-11-21T22:24:35'
   field_password_expiration:
     -
       value: false

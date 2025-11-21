@@ -14,7 +14,7 @@ default:
       value: JoeDoe
   pass:
     -
-      value: $2y$10$ohkTYC8i3BmUopKopIg9We4Lk9Sb8xh5fGD2lpEObbj1KAeqGbrB2
+      value: U$S$EhVQ.EB0vZ6o0Yc5UiimFOYEziuUEb.gI0iYkd/GxYBHl/Y.cFif
       existing: ''
       pre_hashed: false
   mail:
@@ -53,7 +53,7 @@ default:
       tag: link
       attributes:
         rel: canonical
-        href: 'https://microsites-drupal-starter.ddev.site:4443/user/6'
+        href: 'https://drupal-starter.ddev.site:4443/user/6'
   path:
     -
       alias: ''
@@ -61,7 +61,7 @@ default:
       pathauto: 1
   field_last_password_reset:
     -
-      value: '2025-10-26T15:14:45'
+      value: '2024-11-21T22:24:35'
   field_password_expiration:
     -
       value: false

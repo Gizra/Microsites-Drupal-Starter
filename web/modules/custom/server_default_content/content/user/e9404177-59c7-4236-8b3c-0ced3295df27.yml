@@ -12,7 +12,7 @@ default:
       value: "<script>alert('XSS attack!');</script>"
   pass:
     -
-      value: $2y$10$IGl8ZkXoNjJ/uGnjnLdun.dedBKj13V9m1jP0dpQwaDoC.Fey9LPu
+      value: U$S$EUSshCwNnhurSVj37Ht6F/aisWJpkSIFC4auu3mOj7YuomGZ3NpS
       existing: ''
       pre_hashed: false
   mail:
@@ -51,7 +51,7 @@ default:
       tag: link
       attributes:
         rel: canonical
-        href: 'https://microsites-drupal-starter.ddev.site:4443/user/2'
+        href: 'https://drupal-starter.ddev.site:4443/user/3'
   path:
     -
       alias: ''
@@ -59,7 +59,7 @@ default:
       pathauto: 1
   field_last_password_reset:
     -
-      value: '2025-10-26T15:14:45'
+      value: '2024-11-21T22:24:35'
   field_password_expiration:
     -
       value: false

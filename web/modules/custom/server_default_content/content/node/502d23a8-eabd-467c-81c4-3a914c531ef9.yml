@@ -44,12 +44,7 @@ default:
       tag: link
       attributes:
         rel: canonical
-        href: 'https://microsites-drupal-starter.ddev.site:4443/search'
-    -
-      tag: meta
-      attributes:
-        property: 'og:title'
-        content: Search
+        href: 'https://drupal-starter.ddev.site:4443/search'
   path:
     -
       alias: /search
