@@ -114,10 +114,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
 
     $country_access = $country->access('view', $account, TRUE);
     if (!$country_access->isAllowed()) {
-      return AccessResult::forbidden('User has no access to country')
-        // @todo per user
-        ->addCacheableDependency($country_access)
-        ->addCacheableDependency($node);
+      return $country_access;
     }
 
     $language_access = $this->checkLanguageAccess($node, $country, $account);
@@ -129,10 +126,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       // Check if the user has access to the node itself.
       $node_access = $node->access('view', $account, TRUE);
       if (!$node_access->isAllowed()) {
-        return AccessResult::forbidden('User has no access to viewed node')
-          // @todo per user
-          ->addCacheableDependency($country_access)
-          ->addCacheableDependency($node);
+        return $node_access;
       }
     }
 
