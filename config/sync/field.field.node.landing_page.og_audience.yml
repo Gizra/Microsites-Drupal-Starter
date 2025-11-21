@@ -1,20 +1,20 @@
-uuid: a54e03a0-f13b-4d06-8965-7f187737e406
+uuid: 6d75f42c-289a-47d5-ab7e-74e8f3db17dd
 langcode: en
 status: true
 dependencies:
   config:
     - field.storage.node.og_audience
     - node.type.country
-    - node.type.news
+    - node.type.landing_page
   module:
     - og
-id: node.news.og_audience
+id: node.landing_page.og_audience
 field_name: og_audience
 entity_type: node
-bundle: news
-label: Country
-description: ''
-required: true
+bundle: landing_page
+label: 'Groups audience'
+description: 'OG group audience reference field.'
+required: false
 translatable: false
 default_value: {  }
 default_value_callback: ''
@@ -24,7 +24,7 @@ settings:
     target_bundles:
       country: country
     sort:
-      field: title
+      field: _none
       direction: ASC
     auto_create_bundle: ''
 field_type: og_standard_reference

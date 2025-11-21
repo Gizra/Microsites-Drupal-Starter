@@ -87,80 +87,129 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
   }
 
   /**
-   * Checks if user is privileged to bypass group restrictions.
-   *
-   * A user is considered privileged if they have 'bypass node access'
-   * permission or if they are a member of the given group.
+   * Checks if the current node can be accessed based on hostname group context.
    *
    * @param \Drupal\Core\Session\AccountInterface $account
-   *   The account to check.
-   * @param \Drupal\node\NodeInterface $group
-   *   The group entity to check membership for.
+   *   The account to check access for.
+   * @param \Drupal\node\NodeInterface $node
+   *   The node to check access for.
    *
-   * @return bool
-   *   TRUE if user is privileged, FALSE otherwise.
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
    */
-  protected function isPrivilegedUser(AccountInterface $account, NodeInterface $group): bool {
-    // Check for bypass permission.
-    if ($account->hasPermission('bypass node access')) {
-      return TRUE;
+  public function access(AccountInterface $account, NodeInterface $node): AccessResultInterface {
+    $allowed_access = AccessResult::allowed()
+      ->addCacheContexts(['url.site', 'languages:language_interface']);
+
+    if ($this->adminContext->isAdminRoute()) {
+      // Skip access checks for admin routes.
+      return $allowed_access;
     }
 
-    // Check if user is a member of the group.
-    return $this->membershipManager->isMember($group, $account->id());
+    $country = $this->ogContext->getGroup();
+    // No country context resolved.
+    if (empty($country) || !$country instanceof NodeInterface) {
+      return $allowed_access;
+    }
+
+    $country_access = $country->access('view', $account, TRUE);
+    if (!$country_access->isAllowed()) {
+      return AccessResult::forbidden('User has no access to country')
+        // @todo per user
+        ->addCacheableDependency($country_access)
+        ->addCacheableDependency($node);
+    }
+
+    $language_access = $this->checkLanguageAccess($node, $country, $account);
+    if ($language_access->isForbidden()) {
+      return $language_access;
+    }
+
+    if ($country->id() !== $node->id()) {
+      // Check if the user has access to the node itself.
+      $node_access = $node->access('view', $account, TRUE);
+      if (!$node_access->isAllowed()) {
+        return AccessResult::forbidden('User has no access to viewed node')
+          // @todo per user
+          ->addCacheableDependency($country_access)
+          ->addCacheableDependency($node);
+      }
+    }
+
+    // @todo Move to helper method?
+    if (!$country->isPublished()) {
+      $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
+        '@title' => $country->label(),
+      ]));
+    }
+
+    $this->redirectToCorrectHostname($country);
+    return $allowed_access;
+  }
+
+  /**
+   * Checks if a node's language is allowed for the given Country group.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node to check.
+   * @param \Drupal\node\NodeInterface $country
+   *   The Country group entity.
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The account to check access for.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   Returns forbidden if language is not allowed, neutral if check should be
+   *   skipped or language is allowed.
+   */
+  protected function checkLanguageAccess(NodeInterface $node, NodeInterface $country, AccountInterface $account): AccessResultInterface {
+    $access_neutral = AccessResult::neutral()
+      ->addCacheContexts(['url.site', 'languages:language_interface']);
+
+    $allowed_languages = [];
+    foreach ($country->get('field_languages') as $item) {
+      $allowed_languages[] = $item->value;
+    }
+
+    if (empty($allowed_languages)) {
+      return $access_neutral;
+    }
+
+    $node_langcode = $node->language()->getId();
+
+    // Language is allowed for this country.
+    if (in_array($node_langcode, $allowed_languages)) {
+      return $access_neutral;
+    }
+
+    if ($this->membershipManager->isMember($country, $account->id()) || $account->hasPermission('bypass node access')) {
+      // Language is not enabled but allow admin or group members access.
+      $language = $node->language();
+      $this->messenger->addWarning($this->t('You are viewing content in a language (@language) that is not enabled for this country.', [
+        '@language' => $language->getName(),
+      ]));
+
+      return AccessResult::allowed()
+        ->addCacheContexts(['url.site', 'languages:language_interface']);
+    }
+
+    // Language is not available for regular users.
+    return AccessResult::forbidden('This language is not available for the current country context')
+      ->addCacheableDependency($node)
+      ->addCacheableDependency($country)
+      ->addCacheContexts(['url.site', 'languages:language_interface']);
   }
 
   /**
    * Redirect to the correct hostname if the node belongs to a different group.
    *
-   * @param \Drupal\node\NodeInterface $node
-   *   The node being accessed.
-   * @param ?\Drupal\node\NodeInterface $current_group
-   *   The current group context.
+   * @param \Drupal\node\NodeInterface $country
+   *   The Country node.
    */
-  protected function redirectToCorrectHostname(NodeInterface $node, ?NodeInterface $current_group): void {
+  protected function redirectToCorrectHostname(NodeInterface $country): void {
     $request = $this->requestStack->getCurrentRequest();
-    if (!$request) {
-      return;
-    }
 
     $current_hostname = $request->getHost();
-    $target_group = NULL;
-
-    // Check if the node itself is a Country group.
-    if ($this->groupTypeManager->isGroup($node->getEntityTypeId(), $node->bundle())) {
-      // No redirect needed if viewing the same Country as current context.
-      if (!$current_group || $node->id() === $current_group->id()) {
-        return;
-      }
-      $target_group = $node;
-    }
-    // Check if the node is group content.
-    elseif ($this->groupAudienceHelper->hasGroupAudienceField($node->getEntityTypeId(), $node->bundle())) {
-      $content_groups = $this->membershipManager->getGroups($node);
-      if (!isset($content_groups['node']) || empty($content_groups['node'])) {
-        return;
-      }
-
-      $first_group = reset($content_groups['node']);
-      // No redirect needed if content belongs to current group.
-      if ($current_group && $first_group->id() === $current_group->id()) {
-        return;
-      }
-      $target_group = $first_group;
-    }
-
-    // No target group found.
-    if (!$target_group) {
-      return;
-    }
-
-    // Ensure target group is a Node (Country groups are nodes).
-    if (!$target_group instanceof NodeInterface) {
-      return;
-    }
-
-    $hostnames = $target_group->get('field_hostnames');
+    $hostnames = $country->get('field_hostnames');
     if ($hostnames->isEmpty()) {
       return;
     }
@@ -187,275 +236,6 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     $response = new TrustedRedirectResponse($redirect_url);
     $response->send();
     exit;
-  }
-
-  /**
-   * Checks if the current node can be accessed based on hostname group context.
-   *
-   * @param \Drupal\Core\Session\AccountInterface $account
-   *   The account to check access for.
-   * @param \Drupal\node\NodeInterface $node
-   *   The node to check access for.
-   *
-   * @return \Drupal\Core\Access\AccessResultInterface
-   *   The access result.
-   */
-  public function access(AccountInterface $account, NodeInterface $node): AccessResultInterface {
-    $current_group = $this->ogContext->getGroup();
-    $request = $this->requestStack->getCurrentRequest();
-    $is_admin_route = $this->adminContext->isAdminRoute();
-
-    // Invalid group type, allow access.
-    if ($current_group && !$current_group instanceof NodeInterface) {
-      return AccessResult::allowed()
-        ->addCacheableDependency($node)
-        ->addCacheContexts(['url.site', 'languages:language_interface']);
-    }
-
-    // No group context (main site hostname), allow access to all content.
-    if (!$current_group) {
-      return AccessResult::allowed()
-        ->addCacheableDependency($node)
-        ->addCacheContexts(['url.site', 'languages:language_interface']);
-    }
-
-    // Block access to unpublished country hostnames for non-privileged users.
-    if (!$is_admin_route && !$current_group->isPublished() && !$this->isPrivilegedUser($account, $current_group)) {
-      return AccessResult::forbidden('Cannot access content on unpublished country hostname')
-        ->addCacheableDependency($current_group)
-        ->addCacheContexts(['url.site', 'user.permissions']);
-    }
-
-    // Handle Country group nodes.
-    if ($this->groupTypeManager->isGroup($node->getEntityTypeId(), $node->bundle())) {
-      return $this->checkGroupNodeAccess($node, $current_group, $account, $is_admin_route);
-    }
-
-    // Handle group content nodes (e.g., News articles).
-    if ($this->groupAudienceHelper->hasGroupAudienceField($node->getEntityTypeId(), $node->bundle())) {
-      return $this->checkGroupContentAccess($node, $current_group, $account, $request, $is_admin_route);
-    }
-
-    // Show warning if viewing content on an unpublished country's hostname.
-    // This is for non-group content (like landing pages).
-    if (!$is_admin_route && !$current_group->isPublished()) {
-      $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
-        '@title' => $current_group->label(),
-      ]));
-    }
-
-    // Not group content, allow access.
-    return AccessResult::allowed()
-      ->addCacheableDependency($node)
-      ->addCacheableDependency($current_group)
-      ->addCacheContexts(['url.site', 'languages:language_interface']);
-  }
-
-  /**
-   * Checks access for Country group nodes.
-   *
-   * @param \Drupal\node\NodeInterface $node
-   *   The Country node being accessed.
-   * @param \Drupal\node\NodeInterface $current_group
-   *   The current group context.
-   * @param \Drupal\Core\Session\AccountInterface $account
-   *   The account to check access for.
-   * @param bool $is_admin_route
-   *   Whether the current route is an admin route.
-   *
-   * @return \Drupal\Core\Access\AccessResultInterface
-   *   The access result.
-   */
-  protected function checkGroupNodeAccess(NodeInterface $node, NodeInterface $current_group, AccountInterface $account, bool $is_admin_route): AccessResultInterface {
-    // Viewing a different Country than the current context.
-    if ($node->id() !== $current_group->id()) {
-      // On admin routes, allow access (they already have permission to be
-      // there).
-      if ($is_admin_route) {
-        return AccessResult::allowed()
-          ->addCacheableDependency($node)
-          ->addCacheableDependency($current_group)
-          ->addCacheContexts(['url.site']);
-      }
-
-      // On node-specific routes, redirect to correct hostname.
-      $request = $this->requestStack->getCurrentRequest();
-      $route_name = $request ? $request->attributes->get('_route') : NULL;
-      if ($route_name && in_array($route_name, self::NODE_ROUTES)) {
-        $this->redirectToCorrectHostname($node, $current_group);
-      }
-
-      // Deny access for non-admin routes.
-      return AccessResult::forbidden('Cannot view this group from the current hostname')
-        ->addCacheableDependency($node)
-        ->addCacheableDependency($current_group)
-        ->addCacheContexts(['url.site']);
-    }
-
-    // Show warning if viewing unpublished country.
-    if (!$is_admin_route && !$current_group->isPublished()) {
-      // Block access for non-privileged users.
-      if (!$this->isPrivilegedUser($account, $current_group)) {
-        return AccessResult::forbidden('Cannot access unpublished country')
-          ->addCacheableDependency($node)
-          ->addCacheableDependency($current_group)
-          ->addCacheContexts(['url.site', 'user.permissions']);
-      }
-
-      // Show warning for privileged users.
-      $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
-        '@title' => $current_group->label(),
-      ]));
-    }
-
-    // Check language access.
-    $language_access = $this->checkLanguageAccess($node, $current_group, $account, $is_admin_route);
-    if ($language_access) {
-      return $language_access;
-    }
-
-    return AccessResult::allowed()
-      ->addCacheableDependency($node)
-      ->addCacheableDependency($current_group)
-      ->addCacheContexts(['url.site', 'languages:language_interface', 'user.permissions']);
-  }
-
-  /**
-   * Checks if a node's language is allowed for the given Country group.
-   *
-   * @param \Drupal\node\NodeInterface $node
-   *   The node to check.
-   * @param \Drupal\node\NodeInterface $country_group
-   *   The Country group entity.
-   * @param \Drupal\Core\Session\AccountInterface $account
-   *   The account to check access for.
-   * @param bool $is_admin_route
-   *   Whether the current route is an admin route.
-   *
-   * @return \Drupal\Core\Access\AccessResultInterface|null
-   *   Returns forbidden if language is not allowed, null if check should be
-   *   skipped or language is allowed.
-   */
-  protected function checkLanguageAccess(NodeInterface $node, NodeInterface $country_group, AccountInterface $account, bool $is_admin_route): ?AccessResultInterface {
-    $allowed_languages = [];
-    foreach ($country_group->get('field_languages') as $item) {
-      $allowed_languages[] = $item->value;
-    }
-
-    if (empty($allowed_languages)) {
-      return NULL;
-    }
-
-    $node_langcode = $node->language()->getId();
-
-    // Language is allowed for this country.
-    if (in_array($node_langcode, $allowed_languages)) {
-      return NULL;
-    }
-
-    // Language is not enabled but allow privileged users to access.
-    if ($this->isPrivilegedUser($account, $country_group)) {
-      if (!$is_admin_route) {
-        $language = $node->language();
-        $this->messenger->addWarning($this->t('You are viewing content in a language (@language) that is not enabled for this country.', [
-          '@language' => $language->getName(),
-        ]));
-      }
-      return NULL;
-    }
-
-    // Language is not available for regular users.
-    return AccessResult::forbidden('This language is not available for the current country context')
-      ->addCacheableDependency($node)
-      ->addCacheableDependency($country_group)
-      ->addCacheContexts(['url.site', 'languages:language_interface', 'user.permissions']);
-  }
-
-  /**
-   * Checks access for group content nodes.
-   *
-   * @param \Drupal\node\NodeInterface $node
-   *   The group content node being accessed.
-   * @param \Drupal\node\NodeInterface $current_group
-   *   The current group context.
-   * @param \Drupal\Core\Session\AccountInterface $account
-   *   The account to check access for.
-   * @param \Symfony\Component\HttpFoundation\Request|null $request
-   *   The current request.
-   * @param bool $is_admin_route
-   *   Whether the current route is an admin route.
-   *
-   * @return \Drupal\Core\Access\AccessResultInterface
-   *   The access result.
-   */
-  protected function checkGroupContentAccess(NodeInterface $node, NodeInterface $current_group, AccountInterface $account, $request, bool $is_admin_route): AccessResultInterface {
-    $content_groups = $this->membershipManager->getGroups($node);
-
-    // On admin routes, allow access (they already have permission to be there).
-    if ($is_admin_route) {
-      return AccessResult::allowed()
-        ->addCacheableDependency($node)
-        ->addCacheableDependency($current_group)
-        ->addCacheContexts(['url.site']);
-    }
-
-    // On node-specific routes, redirect to correct hostname before access
-    // checks.
-    $route_name = $request ? $request->attributes->get('_route') : NULL;
-    if ($route_name && in_array($route_name, self::NODE_ROUTES)) {
-      $this->redirectToCorrectHostname($node, $current_group);
-    }
-
-    // Check if content belongs to current group.
-    $belongs_to_current_group = FALSE;
-    if (isset($content_groups['node'])) {
-      foreach ($content_groups['node'] as $group) {
-        if ($group->id() === $current_group->id()) {
-          $belongs_to_current_group = TRUE;
-          break;
-        }
-      }
-    }
-
-    // Content doesn't belong to current group, deny access.
-    if (!$belongs_to_current_group) {
-      return AccessResult::forbidden('Content does not belong to the current group context')
-        ->addCacheableDependency($node)
-        ->addCacheContexts(['url.site']);
-    }
-
-    // If the country group is unpublished, only allow privileged users.
-    if (!$current_group->isPublished() && !$this->isPrivilegedUser($account, $current_group)) {
-      return AccessResult::forbidden('Cannot access content of unpublished country')
-        ->addCacheableDependency($node)
-        ->addCacheableDependency($current_group)
-        ->addCacheContexts(['url.site', 'user.permissions']);
-    }
-
-    // Show warning if viewing content on unpublished country.
-    if (!$is_admin_route && !$current_group->isPublished()) {
-      $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
-        '@title' => $current_group->label(),
-      ]));
-    }
-
-    // Show warning for unpublished content.
-    if (!$is_admin_route && !$node->isPublished()) {
-      $this->messenger->addWarning($this->t('You are viewing unpublished content: @title', [
-        '@title' => $node->label(),
-      ]));
-    }
-
-    // Check language access.
-    $language_access = $this->checkLanguageAccess($node, $current_group, $account, $is_admin_route);
-    if ($language_access) {
-      return $language_access;
-    }
-
-    return AccessResult::allowed()
-      ->addCacheableDependency($node)
-      ->addCacheableDependency($current_group)
-      ->addCacheContexts(['url.site', 'languages:language_interface']);
   }
 
 }

@@ -1,9 +1,6 @@
-#ddev-generated
-# Remove the line above if you don't want this file to be overwritten when you run
-# ddev get ddev/ddev-selenium-standalone-chrome
-#
-# This file comes from https://github.com/ddev/ddev-selenium-standalone-chrome
-#
+# Custom copy of https://github.com/ddev/ddev-selenium-standalone-chrome.
+# The '#ddev-generated' marker was removed to keep these overrides intact.
+
 web_environment:
   - BROWSERTEST_OUTPUT_DIRECTORY=/tmp
   - BROWSERTEST_OUTPUT_BASE_URL=${DDEV_PRIMARY_URL}
@@ -27,5 +24,5 @@ web_environment:
   - DRUPAL_NIGHTWATCH_IGNORE_DIRECTORIES=node_modules,vendor,.*,sites/*/files,sites/*/private,sites/simpletest
   - DRUPAL_NIGHTWATCH_OUTPUT=reports/nightwatch
   # DTT
-  - DTT_BASE_URL=http://web
+  - DTT_BASE_URL=${DDEV_PRIMARY_URL}
   - DTT_MINK_DRIVER_ARGS=[\"chrome\", {\"browserName\":\"chrome\",\"goog:chromeOptions\":{\"w3c\":false,\"args\":[\"--disable-dev-shm-usage\",\"--disable-gpu\",\"--headless\",\"--dns-prefetch-disable\"]}}, \"http://selenium-chrome:4444/wd/hub\"]

@@ -10,6 +10,10 @@ additional_hostnames:
     - iq.microsites-drupal-starter
     - es.microsites-drupal-starter
     - us.microsites-drupal-starter
+
+    # Domains used in PHPunit tests.
+    - unpublished-country.microsites-drupal-starter
+    - published-country.microsites-drupal-starter
 additional_fqdns: []
 database:
     type: mariadb

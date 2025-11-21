@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\server_general\ExistingSite;
 
+use Drupal\node\NodeInterface;
 use Drupal\Tests\server_general\Traits\ParagraphCreationTrait;
 
 /**
@@ -10,6 +11,8 @@ use Drupal\Tests\server_general\Traits\ParagraphCreationTrait;
 class ServerGeneralParagraphNewsTeasersTest extends ServerGeneralParagraphTestBase {
 
   use ParagraphCreationTrait;
+
+  private const PUBLISHED_COUNTRY_HOST = 'published-country.microsites-drupal-starter.ddev.site';
 
   /**
    * {@inheritdoc}
@@ -39,6 +42,15 @@ class ServerGeneralParagraphNewsTeasersTest extends ServerGeneralParagraphTestBa
    * Test render of the paragraph.
    */
   public function testRender() {
+    $country = $this->createNode([
+      'type' => 'country',
+      'title' => 'Test Published Country',
+      'status' => NodeInterface::PUBLISHED,
+      'field_country_code' => 'pc',
+      'field_hostnames' => [self::PUBLISHED_COUNTRY_HOST],
+      'field_languages' => ['en'],
+    ]);
+
     $paragraph = $this->createParagraph([
       'type' => $this->getEntityBundle(),
     ]);
@@ -50,6 +62,7 @@ class ServerGeneralParagraphNewsTeasersTest extends ServerGeneralParagraphTestBa
       'field_paragraphs' => [
         $paragraph,
       ],
+      'og_audience' => ['target_id' => $country->id()],
     ]);
 
     // Create node.news with allowed and disallowed html tags in field_body.
@@ -64,9 +77,11 @@ class ServerGeneralParagraphNewsTeasersTest extends ServerGeneralParagraphTestBa
         'format' => 'full_html',
       ],
       'moderation_state' => 'published',
+      'og_audience' => ['target_id' => $country->id()],
     ]);
 
     $this->drupalGet($landing_page_node->toUrl());
+
     $this->assertSession()->elementNotExists('css', '.node--type-news.node--view-mode-teaser .field--name-field-body h3');
     $this->assertSession()->elementExists('css', '.node--type-news.node--view-mode-teaser .field--name-field-body strong');
     $this->assertStringContainsString($body, $this->getCurrentPage()->getOuterHtml());

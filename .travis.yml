@@ -1,0 +1,51 @@
+version: "~> 1.0"
+language: php
+dist: noble
+php:
+  - 8.3
+services:
+  - docker
+stages:
+  - lint
+  - test
+  - deploy
+env:
+  global:
+  - DDEV_NO_INSTRUMENTATION=true
+  # This is a dummy token, just to satisfy the conditions for testing.
+  - ROLLBAR_SERVER_TOKEN=df6ce617465b4980afdecc95ed1b42de
+git:
+  depth: 500
+
+
+jobs:
+  allow_failures:
+    env:
+      - CAN_FAIL=true
+  include:
+    - stage: Lint
+      name: PhpStan
+      script:
+        - "$TRAVIS_BUILD_DIR/ci-scripts/test_syntax.sh || travis_terminate 1;"
+        - composer install
+        - PHP_MEMORY_LIMIT=2G ./vendor/bin/phpstan --no-progress analyse -c phpstan.neon
+
+    - stage: Lint
+      name: Drupal coding standard
+      script:
+        - composer install || travis_terminate 1;
+        - vendor/bin/robo phpcs || travis_terminate 1;
+
+    - stage: Lint
+      name: 'Shell coding standard: shellcheck'
+      script:
+        - "$TRAVIS_BUILD_DIR/ci-scripts/install_shell.sh || travis_terminate 1;"
+        - "$TRAVIS_BUILD_DIR/ci-scripts/test_shell.sh || travis_terminate 1;"
+
+    - stage: Test
+      name: 'Backend tests: Functional tests'
+      script:
+        - "(travis_retry $TRAVIS_BUILD_DIR/ci-scripts/install_ddev.sh) || travis_terminate 1;"
+        - "$TRAVIS_BUILD_DIR/ci-scripts/install_drupal.sh || travis_terminate 1;"
+        - "$TRAVIS_BUILD_DIR/ci-scripts/test_phpunit.sh || travis_terminate 1;"
+        - "$TRAVIS_BUILD_DIR/ci-scripts/test_phpunit_rollbar.sh || travis_terminate 1;"

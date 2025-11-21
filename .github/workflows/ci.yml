@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  DDEV_NO_INSTRUMENTATION: true
+  ROOT_DIR: ${{ github.workspace }}
+  TRAVIS_BUILD_DIR: ${{ github.workspace }}
+  ROLLBAR_SERVER_TOKEN: ${{ secrets.ROLLBAR_SERVER_TOKEN != '' && secrets.ROLLBAR_SERVER_TOKEN || 'df6ce617465b4980afdecc95ed1b42de' }}
+
+jobs:
+  phpstan:
+    name: PhpStan
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          extensions: curl, dom, intl, json, mbstring, simplexml
+
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --no-interaction --no-progress
+
+      - name: Check PHP file syntax
+        run: ./ci-scripts/test_syntax.sh
+
+      - name: Run PHPStan
+        run: PHP_MEMORY_LIMIT=2G ./vendor/bin/phpstan --no-progress analyse -c phpstan.neon
+
+  phpcs:
+    name: Drupal coding standard
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          extensions: curl, dom, intl, json, mbstring, simplexml
+
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          composer-options: --no-interaction --no-progress
+
+      - name: Run Robo PHPCS
+        run: vendor/bin/robo phpcs
+
+  shellcheck:
+    name: Shell coding standard
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install shell tooling
+        run: ./ci-scripts/install_shell.sh
+
+      - name: Run ShellCheck
+        run: ./ci-scripts/test_shell.sh
+
+  backend-tests:
+    name: 'Backend tests: Functional tests'
+    runs-on: ubuntu-22.04
+    needs:
+      - phpstan
+      - phpcs
+      - shellcheck
+    timeout-minutes: 45
+    env:
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DDEV_NONINTERACTIVE: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libnss3-tools
+
+      - name: Setup DDEV
+        uses: ddev/github-action-setup-ddev@v1
+        with:
+          version: 1.24.10
+
+      - name: Configure DDEV and install project dependencies
+        run: ./ci-scripts/install_ddev.sh
+
+      - name: Install Drupal
+        run: ./ci-scripts/install_drupal.sh
+
+      - name: Run PHPUnit test suite
+        run: ./ci-scripts/test_phpunit.sh
+
+      - name: Run Rollbar PHPUnit test suite
+        run: ./ci-scripts/test_phpunit_rollbar.sh

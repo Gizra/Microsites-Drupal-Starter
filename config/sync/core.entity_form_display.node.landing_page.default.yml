@@ -5,8 +5,11 @@ dependencies:
   config:
     - field.field.node.landing_page.field_is_title_hidden
     - field.field.node.landing_page.field_paragraphs
+    - field.field.node.landing_page.og_audience
     - node.type.landing_page
+    - workflows.workflow.default
   module:
+    - content_moderation
     - paragraphs
     - path
 id: node.landing_page.default
@@ -52,6 +55,18 @@ content:
     region: content
     settings:
       include_locked: false
+    third_party_settings: {  }
+  moderation_state:
+    type: moderation_state_default
+    weight: 100
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  og_audience:
+    type: options_select
+    weight: 101
+    region: content
+    settings: {  }
     third_party_settings: {  }
   path:
     type: path
