@@ -1,0 +1,151 @@
+_meta:
+  version: '1.0'
+  entity_type: node
+  uuid: 2bf8e7b6-fd5d-4956-b272-a6f1aad5228d
+  bundle: news
+  default_langcode: ar
+  depends:
+    11318276-1099-48d3-ae54-1e4746558d2e: user
+    20e0c193-81fb-4de1-a876-0986f5dde59a: media
+    44b153c8-de8c-4b8e-8ba0-a131fae8b25d: node
+translations:
+  en:
+    status:
+      -
+        value: true
+    uid:
+      -
+        entity: 11318276-1099-48d3-ae54-1e4746558d2e
+    title:
+      -
+        value: 'The site disappeared after a cache clear'
+    created:
+      -
+        value: 1762149694
+    promote:
+      -
+        value: true
+    sticky:
+      -
+        value: false
+    revision_translation_affected:
+      -
+        value: true
+    moderation_state:
+      -
+        value: published
+    metatag:
+      -
+        tag: meta
+        attributes:
+          name: title
+          content: 'The site disappeared after a cache clear | Drupal Starter'
+      -
+        tag: link
+        attributes:
+          rel: canonical
+          href: 'https://microsites-drupal-starter.ddev.site:4443/news/site-disappeared-after-cache-clear'
+      -
+        tag: meta
+        attributes:
+          property: 'og:title'
+          content: 'The site disappeared after a cache clear'
+      -
+        tag: meta
+        attributes:
+          property: 'og:description'
+          content: 'المطور يؤكد: “أنا فقط ضغطت الزر.”(The site disappeared after a cache clear. The developer swears: “I only pressed the button.”)'
+      -
+        tag: meta
+        attributes:
+          property: 'og:image'
+          content: 'https://microsites-drupal-starter.ddev.site:4443/sites/default/files/statue-800x600_55_1_4.jpg'
+    path:
+      -
+        alias: /news/site-disappeared-after-cache-clear
+        langcode: en
+        pathauto: 1
+    content_translation_source:
+      -
+        value: ar
+    content_translation_outdated:
+      -
+        value: false
+    field_featured_image:
+      -
+        entity: 20e0c193-81fb-4de1-a876-0986f5dde59a
+    og_audience:
+      -
+        entity: 44b153c8-de8c-4b8e-8ba0-a131fae8b25d
+default:
+  revision_uid:
+    -
+      entity: 11318276-1099-48d3-ae54-1e4746558d2e
+  status:
+    -
+      value: true
+  uid:
+    -
+      entity: 11318276-1099-48d3-ae54-1e4746558d2e
+  title:
+    -
+      value: 'الموقع اختفى بعد الكاش درين'
+  created:
+    -
+      value: 1761856731
+  promote:
+    -
+      value: true
+  sticky:
+    -
+      value: false
+  moderation_state:
+    -
+      value: published
+  metatag:
+    -
+      tag: meta
+      attributes:
+        name: title
+        content: 'الموقع اختفى بعد الكاش درين | Drupal Starter'
+    -
+      tag: link
+      attributes:
+        rel: canonical
+        href: 'https://microsites-drupal-starter.ddev.site:4443/ar/news/almwq-akhtfy-bd-alkash-dryn'
+    -
+      tag: meta
+      attributes:
+        property: 'og:title'
+        content: 'الموقع اختفى بعد الكاش درين'
+    -
+      tag: meta
+      attributes:
+        property: 'og:description'
+        content: 'المطور يؤكد: “أنا فقط ضغطت الزر.”(The site disappeared after a cache clear. The developer swears: “I only pressed the button.”)'
+    -
+      tag: meta
+      attributes:
+        property: 'og:image'
+        content: 'https://microsites-drupal-starter.ddev.site:4443/sites/default/files/statue-800x600_55_1_4.jpg'
+  path:
+    -
+      alias: /news/almwq-akhtfy-bd-alkash-dryn
+      langcode: ar
+      pathauto: 1
+  content_translation_source:
+    -
+      value: und
+  content_translation_outdated:
+    -
+      value: false
+  field_body:
+    -
+      value: '<p>المطور يؤكد: “أنا فقط ضغطت الزر.”<br><em>(The site disappeared after a cache clear. The developer swears: “I only pressed the button.”)</em></p>'
+      format: basic_html
+  field_featured_image:
+    -
+      entity: 20e0c193-81fb-4de1-a876-0986f5dde59a
+  og_audience:
+    -
+      entity: 44b153c8-de8c-4b8e-8ba0-a131fae8b25d

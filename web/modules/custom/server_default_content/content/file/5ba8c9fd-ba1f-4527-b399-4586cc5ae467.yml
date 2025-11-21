@@ -1,7 +1,7 @@
 _meta:
   version: '1.0'
   entity_type: file
-  uuid: 61c2811c-7e3a-4492-a651-2a6b32a9fd95
+  uuid: 5ba8c9fd-ba1f-4527-b399-4586cc5ae467
   default_langcode: en
 default:
   uid:
@@ -9,19 +9,19 @@ default:
       target_id: 1
   filename:
     -
-      value: drupal-starter_8.pdf
+      value: generic.png
   uri:
     -
-      value: 'public://drupal-starter_8_1.pdf'
+      value: 'public://media-icons/generic/generic.png'
   filemime:
     -
-      value: application/pdf
+      value: image/png
   filesize:
     -
-      value: 12062
+      value: 3900
   status:
     -
       value: true
   created:
     -
-      value: 1686167785
+      value: 1761491685

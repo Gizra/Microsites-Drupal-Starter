@@ -1,0 +1,82 @@
+_meta:
+  version: '1.0'
+  entity_type: node
+  uuid: e6127767-4628-42a7-bd6d-b4d482f6bcc4
+  bundle: country
+  default_langcode: en
+  depends:
+    11318276-1099-48d3-ae54-1e4746558d2e: user
+    d5c007fd-4537-4f6c-b205-1f31889bd67f: user
+default:
+  revision_uid:
+    -
+      entity: 11318276-1099-48d3-ae54-1e4746558d2e
+  status:
+    -
+      value: true
+  uid:
+    -
+      entity: d5c007fd-4537-4f6c-b205-1f31889bd67f
+  title:
+    -
+      value: Spain
+  created:
+    -
+      value: 1761493263
+  promote:
+    -
+      value: true
+  sticky:
+    -
+      value: false
+  revision_translation_affected:
+    -
+      value: true
+  metatag:
+    -
+      tag: meta
+      attributes:
+        name: title
+        content: 'Spain | Drupal Starter'
+    -
+      tag: meta
+      attributes:
+        name: description
+        content: 'Spain, a country on Europe’s Iberian Peninsula, includes 17 autonomous regions with diverse geography and cultures. Capital city Madrid is home to the Royal Palace and Prado museum, housing works by European masters. Segovia has a medieval castle (the Alcázar) and an intact Roman aqueduct. Catalonia’s capital, Barcelona, is defined by Antoni Gaudí’s whimsical modernist landmarks like the Sagrada Família church'
+    -
+      tag: link
+      attributes:
+        rel: canonical
+        href: 'https://microsites-drupal-starter.ddev.site:4443/node/12'
+    -
+      tag: meta
+      attributes:
+        property: 'og:title'
+        content: Spain
+  path:
+    -
+      alias: ''
+      langcode: en
+      pathauto: 0
+  content_translation_source:
+    -
+      value: und
+  content_translation_outdated:
+    -
+      value: false
+  body:
+    -
+      value: '<p><span>Spain, a country on Europe’s Iberian Peninsula, includes 17 autonomous regions with diverse geography and cultures. Capital city Madrid is home to the Royal Palace and Prado museum, housing works by European masters. Segovia has a medieval castle (the Alcázar) and an intact Roman aqueduct. Catalonia’s capital, Barcelona, is defined by Antoni Gaudí’s whimsical modernist landmarks like the Sagrada Família church</span></p>'
+      format: basic_html
+      summary: ''
+  field_country_code:
+    -
+      value: es
+  field_hostnames:
+    -
+      value: es.microsites-drupal-starter.ddev.site
+  field_languages:
+    -
+      value: en
+    -
+      value: es

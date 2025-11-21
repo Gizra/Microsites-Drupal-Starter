@@ -1,0 +1,81 @@
+_meta:
+  version: '1.0'
+  entity_type: node
+  uuid: 44b153c8-de8c-4b8e-8ba0-a131fae8b25d
+  bundle: country
+  default_langcode: en
+  depends:
+    d5c007fd-4537-4f6c-b205-1f31889bd67f: user
+default:
+  revision_uid:
+    -
+      entity: d5c007fd-4537-4f6c-b205-1f31889bd67f
+  status:
+    -
+      value: true
+  uid:
+    -
+      entity: d5c007fd-4537-4f6c-b205-1f31889bd67f
+  title:
+    -
+      value: Iraq
+  created:
+    -
+      value: 1761493281
+  promote:
+    -
+      value: true
+  sticky:
+    -
+      value: false
+  revision_translation_affected:
+    -
+      value: true
+  metatag:
+    -
+      tag: meta
+      attributes:
+        name: title
+        content: 'Iraq | Drupal Starter'
+    -
+      tag: meta
+      attributes:
+        name: description
+        content: 'Iraq, officially the Republic of Iraq, is a country in West Asia. It is bordered by Saudi Arabia to the south, Turkey to the north, Iran to the east, the Persian Gulf and Kuwait to the southeast, Jordan to the southwest, and Syria to the west.'
+    -
+      tag: link
+      attributes:
+        rel: canonical
+        href: 'https://microsites-drupal-starter.ddev.site:4443/node/13'
+    -
+      tag: meta
+      attributes:
+        property: 'og:title'
+        content: Iraq
+  path:
+    -
+      alias: ''
+      langcode: en
+      pathauto: 0
+  content_translation_source:
+    -
+      value: und
+  content_translation_outdated:
+    -
+      value: false
+  body:
+    -
+      value: '<p><span>Iraq, officially the Republic of Iraq, is a country in West Asia. It is bordered by Saudi Arabia to the south, Turkey to the north, Iran to the east, the Persian Gulf and Kuwait to the southeast, Jordan to the southwest, and Syria to the west.</span></p>'
+      format: basic_html
+      summary: ''
+  field_country_code:
+    -
+      value: iq
+  field_hostnames:
+    -
+      value: iq.microsites-drupal-starter.ddev.site
+  field_languages:
+    -
+      value: ar
+    -
+      value: en
