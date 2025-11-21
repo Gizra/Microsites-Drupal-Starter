@@ -49,6 +49,8 @@ class ServerGeneralInputFormatTest extends ServerGeneralTestBase {
     $this->assertSession()->elementExists('css', '.danger-danger');
     // The onmouseover attribute is completely droppped.
     $this->assertStringNotContainsString('onmouseover', $this->getCurrentPage()->getOuterHtml());
+
+    throw new \Exception('Debugging');
   }
 
 }
