@@ -41,6 +41,8 @@ class ServerGeneralInputFormatTest extends ServerGeneralTestBase {
     // Set the Country field.
     $this->getSession()->getPage()->selectFieldOption('edit-og-audience', $country->id());
 
+    $this->assertFalse(TRUE);
+
     $this->click('#edit-submit');
     // <script> tag is eliminated.
     $this->assertSession()->elementNotExists('css', '.node--type-news script');
