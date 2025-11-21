@@ -46,7 +46,7 @@ class ServerGeneralInputFormatTest extends ServerGeneralTestBase {
     $this->assertSession()->elementNotExists('css', '.node--type-news script');
     // The class attribute is preserved.
     $this->assertSession()->elementExists('css', '.danger-danger');
-    // The onmouseover attribute is completely droppped.
+    // The onmouseover attribute is completely dropped.
     $this->assertStringNotContainsString('onmouseover', $this->getCurrentPage()->getOuterHtml());
   }
 

@@ -144,7 +144,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
   }
 
   /**
-   * Test an anonymous user can access published country.
+   * Test an authenticated user can access published country.
    */
   public function testPublishedCountryAccessAuthenticated(): void {
     $country = $this->publishedCountry;
@@ -188,7 +188,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
   public function testGroupContentLanguageRestrictionsAuthenticated(): void {
     $country = $this->publishedCountry;
 
-    // Am admin user.
+    // An admin user.
     $admin = $this->createUser(['bypass node access']);
 
     // A group member user.
