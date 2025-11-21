@@ -14,13 +14,13 @@ default:
       value: 404.png
   uri:
     -
-      value: 'public://404_1.png'
+      value: 'public://404.png'
   filemime:
     -
       value: image/png
   filesize:
     -
-      value: 17954
+      value: 8743
   status:
     -
       value: true
