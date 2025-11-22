@@ -91,15 +91,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Cache ddev binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.ddev/bin
+          key: ddev-${{ runner.os }}-v1-24-10
+          restore-keys: |
+            ddev-${{ runner.os }}-
+
+      - name: Add ddev to PATH
+        run: |
+          mkdir -p ~/.ddev/bin
+          echo "$HOME/.ddev/bin" >> "$GITHUB_PATH"
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y libnss3-tools
-
-      - name: Setup DDEV
-        uses: ddev/github-action-setup-ddev@v1
-        with:
-          version: 1.24.10
 
       - name: Configure DDEV and install project dependencies
         run: ./ci-scripts/install_ddev.sh
