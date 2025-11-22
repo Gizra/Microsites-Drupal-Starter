@@ -24,6 +24,7 @@ default_content:
     - 2bf8e7b6-fd5d-4956-b272-a6f1aad5228d # الموقع اختفى بعد الكاش درين
     - f143235c-7caf-41dd-980f-9bdceff17475 # United States (Country)
     - 5555ed22-a142-41e5-8ec6-9efa05dcc911 # Unpublished News
+    - 5b128fa6-9dfa-4c40-ab47-2e002a29cc46.yml # Published News for an Unpublished Country
 
   menu_link_content:
     - 9de08065-e32f-47a9-8564-7dc67b91212d # What We Do
