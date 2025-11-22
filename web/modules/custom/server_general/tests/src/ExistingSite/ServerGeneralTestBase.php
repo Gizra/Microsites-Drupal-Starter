@@ -6,6 +6,7 @@ namespace Drupal\Tests\server_general\ExistingSite;
 
 use Drupal\Tests\server_general\TestConfiguration;
 use Drupal\Tests\server_general\Traits\MemoryManagementTrait;
+use weitzman\DrupalTestTraits\Exception\PhpWatchdogException;
 use weitzman\DrupalTestTraits\ExistingSiteBase;
 
 /**
@@ -21,8 +22,39 @@ abstract class ServerGeneralTestBase extends ExistingSiteBase {
    * {@inheritdoc}
    */
   public function tearDown(): void {
+    $messages = [];
+    $original_fail_on_watchdog = $this->failOnPhpWatchdogMessages;
+
+    // Collect PHP watchdog entries so we can surface their full output in CI.
+    if ($this->failOnPhpWatchdogMessages && \Drupal::database()->schema()->tableExists('watchdog')) {
+      $messages = \Drupal::database()
+        ->select('watchdog', 'w')
+        ->fields('w')
+        ->condition('w.type', 'PHP', '=')
+        ->execute()
+        ->fetchAll();
+
+      foreach ($messages as $error) {
+        // Perform replacements so the error message is easier to read.
+        // @codingStandardsIgnoreLine
+        $error->variables = unserialize($error->variables);
+        $error->message = str_replace(array_keys($error->variables), $error->variables, $error->message);
+        unset($error->variables);
+      }
+    }
+
+    // Avoid the parent throwing its own generic exception before we can add
+    // the detailed watchdog output to the message.
+    $this->failOnPhpWatchdogMessages = FALSE;
     parent::tearDown();
+    $this->failOnPhpWatchdogMessages = $original_fail_on_watchdog;
+
     $this->performMemoryCleanup();
+
+    if (!empty($messages)) {
+      $formatted = array_map(static fn($error) => trim(print_r($error, TRUE)), $messages);
+      throw new PhpWatchdogException('PHP errors or warnings are introduced when running this test. Details: ' . implode(' | ', $formatted));
+    }
   }
 
   /**

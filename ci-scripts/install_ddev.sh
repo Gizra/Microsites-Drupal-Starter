@@ -16,6 +16,11 @@ else
     echo "Installing ddev."
     curl -s -LO https://raw.githubusercontent.com/drud/ddev/master/scripts/install_ddev.sh && bash install_ddev.sh $DDEV_VERSION
     rm install_ddev.sh
+    # Persist the installed binary into the cacheable path for next runs.
+    mkdir -p "$HOME/.ddev/bin"
+    if command -v ddev >/dev/null 2>&1; then
+        cp "$(command -v ddev)" "$HOME/.ddev/bin/ddev"
+    fi
 fi
 
 # Upon travis_retry, have a fresh start.
