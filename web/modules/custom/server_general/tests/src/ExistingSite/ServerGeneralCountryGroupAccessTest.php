@@ -10,6 +10,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Test Country group access control and hostname-based restrictions.
+ *
+ * We mark tests as some tests may create watchdog messages, and we don't want
+ * them to fail the test suite which runs in parallel.
+ *
+ * See ::testGroupContentLanguageRestrictionsAnonymous
+ *
+ * @group sequential
  */
 class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
   private const DEFAULT_HOST = 'microsites-drupal-starter.ddev.site';
