@@ -112,28 +112,3 @@ jobs:
 
       - name: Run Rollbar PHPUnit test suite
         run: ./ci-scripts/test_phpunit_rollbar.sh
-
-      - name: Dump PHP watchdog errors on failure
-        if: failure()
-        run: |
-          echo "Dumping PHP watchdog messages from Drupal..."
-          ddev drush php-eval "$(cat <<'PHP'
-          $messages = \Drupal::database()
-            ->select('watchdog', 'w')
-            ->fields('w')
-            ->condition('w.type', 'PHP', '=')
-            ->execute()
-            ->fetchAll();
-          if (empty($messages)) {
-            echo "No PHP watchdog messages." . PHP_EOL;
-            return;
-          }
-          foreach ($messages as $error) {
-            // Perform replacements so the error message is easier to read in the log.
-            $error->variables = unserialize($error->variables);
-            $error->message = str_replace(array_keys($error->variables), $error->variables, $error->message);
-            unset($error->variables);
-            print_r($error);
-          }
-          PHP
-          )"
