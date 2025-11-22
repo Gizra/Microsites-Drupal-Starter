@@ -81,4 +81,33 @@ class ServerGeneralTranslatorTest extends ServerGeneralTestBase {
     $this->assertSession()->statusCodeEquals(Response::HTTP_FORBIDDEN);
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function tearDown(): void {
+    // Dump PHP watchdog messages to ensure CI captures the details.
+    $database = \Drupal::database();
+    if ($database->schema()->tableExists('watchdog')) {
+      $messages = $database
+        ->select('watchdog', 'w')
+        ->fields('w')
+        ->condition('w.type', 'PHP', '=')
+        ->execute()
+        ->fetchAll();
+      if (empty($messages)) {
+        print_r('No errors found');
+      }
+      else {
+        foreach ($messages as $error) {
+          $error->variables = unserialize($error->variables);
+          $error->message = str_replace(array_keys($error->variables), $error->variables, $error->message);
+          unset($error->variables);
+          print_r($error);
+        }
+      }
+    }
+
+    parent::tearDown();
+  }
+
 }
