@@ -103,6 +103,13 @@ jobs:
         run: |
           mkdir -p ~/.ddev/bin
           echo "$HOME/.ddev/bin" >> "$GITHUB_PATH"
+          if [ -x "$HOME/.ddev/bin/ddev" ]; then
+            echo "Using cached ddev binary:"
+            ls -l "$HOME/.ddev/bin/ddev"
+            "$HOME/.ddev/bin/ddev" version
+          else
+            echo "No cached ddev binary found."
+          fi
 
       - name: Install system dependencies
         run: |

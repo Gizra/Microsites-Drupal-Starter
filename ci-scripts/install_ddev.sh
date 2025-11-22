@@ -9,12 +9,13 @@ fi
 
 DDEV_VERSION="v1.24.10"
 
-if ! command -v ddev &>/dev/null; then
+# Prefer cached binary in ~/.ddev/bin; fall back to curl installer.
+if [ -x "$HOME/.ddev/bin/ddev" ]; then
+    echo "Using cached ddev binary."
+else
     echo "Installing ddev."
     curl -s -LO https://raw.githubusercontent.com/drud/ddev/master/scripts/install_ddev.sh && bash install_ddev.sh $DDEV_VERSION
     rm install_ddev.sh
-else
-    echo "ddev $DDEV_VERSION is already installed."
 fi
 
 # Upon travis_retry, have a fresh start.
