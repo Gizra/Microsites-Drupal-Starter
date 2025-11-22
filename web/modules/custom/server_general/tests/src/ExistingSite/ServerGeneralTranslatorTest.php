@@ -99,6 +99,7 @@ class ServerGeneralTranslatorTest extends ServerGeneralTestBase {
       }
       else {
         foreach ($messages as $error) {
+          // @codingStandardsIgnoreLine
           $error->variables = unserialize($error->variables);
           $error->message = str_replace(array_keys($error->variables), $error->variables, $error->message);
           unset($error->variables);
