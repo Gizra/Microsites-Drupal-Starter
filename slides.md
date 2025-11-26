@@ -11,13 +11,7 @@ _`Pluggable Entity View Builder and the Amazing Drupal-Starter`_
 
 ---
 
-<div style="max-height: 600px; overflow-y: auto;">
-  <img src="assets/drupal-starter.jpg" style="width: 100%;">
-</div>
-
----
-
-![CTA Screenshot](assets/cta.jpg)
+![Welcome page](assets/welcome.jpg)
 ---
 
 ## My Goals
@@ -35,9 +29,6 @@ _`Pluggable Entity View Builder and the Amazing Drupal-Starter`_
 
 *Theming is the time-consuming part*
 
----
-
-![Paragraph CTA Screenshot](assets/paragraph_cta.jpg)
 
 ---
 
