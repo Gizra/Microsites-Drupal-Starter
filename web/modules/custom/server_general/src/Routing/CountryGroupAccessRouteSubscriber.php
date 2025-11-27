@@ -208,8 +208,7 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     $request = $this->requestStack->getCurrentRequest();
 
     $current_hostname = $request->getHost();
-    $hostname_values = $country->get('field_hostname')->getValue();
-    $correct_hostname = $hostname_values[0]['value'] ?? '';
+    $correct_hostname = $country->get('field_hostname')->value ?? '';
 
     if (!$correct_hostname || $correct_hostname === $current_hostname) {
       return;
