@@ -79,48 +79,6 @@
 
 ---
 
-## First we start with the access
-
-<pre><code data-trim class="language-php" data-line-numbers>
-/**
- * Implements hook_node_access().
- */
-function server_general_node_access(NodeInterface $entity, string $op, AccountInterface $account) {
-  $country_result = _server_general_node_access_country_hostname($entity, $op, $account);
-  if (!$country_result->isNeutral()) {
-    return $country_result;
-  }
-
-  // ...
-
-}
-</code></pre>
-
----
-
-<pre><code data-trim class="language-php" data-line-numbers>
-function _server_general_node_access_country_hostname(NodeInterface $entity, string $op, AccountInterface $account): AccessResultInterface {
-
-  // Get the current Organic Group context.
-  $og_context = \Drupal::service('og.context');
-  $current_group = $og_context->getGroup();
-  // ...
-
-  // Check if the user is a member of the current Country group.
-  $membership_manager = \Drupal::service('og.membership_manager');
-  if (!$membership_manager->isMember($entity, $account->id())) {
-    return AccessResult::neutral();
-  }
-
-  return AccessResult::allowed()
-    ->addCacheableDependency($entity)
-    ->addCacheContexts(['url.site', 'og_membership_state'])
-    ->addCacheTags(['og_membership_list']);
-}
-</code></pre>
-
----
-
 <pre><code data-trim class="language-php" data-line-numbers>
 #[OgGroupResolver(
   id: 'country_hostname',
@@ -132,7 +90,7 @@ class Country extends OgRouteGroupResolverBase {
 
 ---
 
-<pre><code data-trim class="language-php" data-line-numbers>
+<pre><code data-trim class="language-php" data-line-numbers="1-4|8-13|17-26">
 public function resolve(OgResolvedGroupCollectionInterface $collection) {
   // ...
   // Get the current hostname from the request.
@@ -175,3 +133,123 @@ group_resolvers:
   - route_group_content
   - country_hostname
 </code></pre>
+
+
+<pre><code data-trim class="language-php" data-line-numbers>
+/**
+ * Implements hook_node_access().
+ */
+function server_general_node_access(NodeInterface $entity, string $op, AccountInterface $account) {
+  $country_result = _server_general_node_access_country_hostname($entity, $op, $account);
+  if (!$country_result->isNeutral()) {
+    return $country_result;
+  }
+
+  // ...
+
+}
+</code></pre>
+
+---
+
+<pre><code data-trim class="language-php" data-line-numbers="1|3-6|8-12|14-17">
+function _server_general_node_access_country_hostname(NodeInterface $entity, string $op, AccountInterface $account): AccessResultInterface {
+
+  // Get the current Organic Group context.
+  $og_context = \Drupal::service('og.context');
+  $current_group = $og_context->getGroup();
+  // ...
+
+  // Check if the user is a member of the current Country group.
+  $membership_manager = \Drupal::service('og.membership_manager');
+  if (!$membership_manager->isMember($entity, $account->id())) {
+    return AccessResult::neutral();
+  }
+
+  return AccessResult::allowed()
+    ->addCacheableDependency($entity)
+    ->addCacheContexts(['url.site', 'og_membership_state'])
+    ->addCacheTags(['og_membership_list']);
+}
+</code></pre>
+
+---
+
+<pre><code data-trim class="language-php" data-line-numbers="5-10|16-22|24-28|30-33|35-38|40-46|48-53|54-56">
+final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
+
+  // ...
+
+  protected function alterRoutes(RouteCollection $collection) {
+    // Add custom access check to node routes.
+    foreach (self::NODE_ROUTES as $route_name) {
+      if ($route = $collection->get($route_name)) {
+        $route->setRequirement('_custom_access', 'server_general.country_group_access_route_subscriber::access');
+      }
+    }
+  }
+
+
+  public function access(AccountInterface $account, NodeInterface $node): AccessResultInterface {
+    $allowed_access = AccessResult::allowed()
+      ->addCacheContexts(['url.site', 'languages:language_interface']);
+
+    if ($this->adminContext->isAdminRoute()) {
+      // Skip access checks for admin routes.
+      return $allowed_access;
+    }
+
+    $country = $this->ogContext->getGroup();
+    // No country context resolved.
+    if (empty($country) || !$country instanceof NodeInterface) {
+      return $allowed_access;
+    }
+
+    $country_access = $country->access('view', $account, TRUE);
+    if (!$country_access->isAllowed()) {
+      return $country_access;
+    }
+
+    $language_access = $this->checkLanguageAccess($node, $country, $account);
+    if ($language_access->isForbidden()) {
+      return $language_access;
+    }
+
+    if ($country->id() !== $node->id()) {
+      // Check if the user has access to the node itself.
+      $node_access = $node->access('view', $account, TRUE);
+      if (!$node_access->isAllowed()) {
+        return $node_access;
+      }
+    }
+
+    if (!$country->isPublished()) {
+      $this->messenger->addWarning($this->t('You are viewing content on an unpublished country: @title', [
+        '@title' => $country->label(),
+      ]));
+    }
+
+    $this->redirectToCorrectHostname($country);
+    return $allowed_access;
+  }
+  </code></pre>
+
+---
+
+![Country view](assets/country-view.jpg)
+
+---
+
+![Country group](assets/country-group.jpg)
+
+---
+
+![](assets/og-permissions.jpg)
+
+---
+
+![](assets/og-permissions-country.jpg)
+
+---
+
+
