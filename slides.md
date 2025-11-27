@@ -79,50 +79,49 @@
 
 ---
 
-<pre><code data-trim class="language-php" data-line-numbers>
+<pre><code data-trim class="language-php" data-line-numbers="1-6|8-11|14-23|26-37">
 #[OgGroupResolver(
   id: 'country_hostname',
   label: new TranslatableMarkup('Country from hostname'),
   description: new TranslatableMarkup('Resolves the Country group based on the current hostname.')
 )]
 class Country extends OgRouteGroupResolverBase {
-</code></pre>
 
----
+  public function resolve(OgResolvedGroupCollectionInterface $collection) {
+    // Get the current hostname from the request.
+    $request = $this->requestStack->getCurrentRequest();
+    $hostname = $request->getHost();
 
-<pre><code data-trim class="language-php" data-line-numbers="1-4|8-13|17-26">
-public function resolve(OgResolvedGroupCollectionInterface $collection) {
-  // ...
-  // Get the current hostname from the request.
-  $hostname = $request->getHost();
+    // ...
+    $storage = $this->entityTypeManager->getStorage('node');
+
+    // Query Country nodes that have the current hostname in field_hostname.
+    $query = $storage->getQuery()
+      ->condition('type', 'country')
+      ->condition('field_hostname', $hostname)
+      ->accessCheck(FALSE)
+      ->range(0, 1);
+
+    $nids = $query->execute();
 
 
-  // ...
-  // Query Country nodes that have the current hostname in field_hostnames.
-  $query = $storage->getQuery()
-    ->condition('type', 'country')
-    ->condition('field_hostnames', $hostname)
-    ->accessCheck(FALSE)
-    ->range(0, 1);
+    // ...
+    // Verify it's actually a group.
+    $country = $storage->load($nid);
+    if ($this->groupTypeManager->isGroup($country->getEntityTypeId(), $country->bundle())) {
+      // Add the group with the 'url.site' cache context since it depends on
+      // the hostname.
+      $collection->addGroup($country, ['url.site']);
 
-
-  // ...
-  // Verify it's actually a group.
-  $country = $storage->load($nid);
-  if ($this->groupTypeManager->isGroup($country->getEntityTypeId(), $country->bundle())) {
-    // Add the group with the 'url.site' cache context since it depends on
-    // the hostname.
-    $collection->addGroup($country, ['url.site']);
-
-    // Since we found a specific Country based on the hostname, we can be
-    // certain this is the correct group context and stop propagation.
-    $this->stopPropagation();
+      // Since we found a specific Country based on the hostname, we can be
+      // certain this is the correct group context and stop propagation.
+      $this->stopPropagation();
   }
 }
+
 </code></pre>
 
 ---
-
 
 <pre><code data-trim class="language-yaml" data-line-numbers="1-7|7">
 # og.settings.yml
@@ -134,6 +133,7 @@ group_resolvers:
   - country_hostname
 </code></pre>
 
+---
 
 <pre><code data-trim class="language-php" data-line-numbers>
 /**
@@ -261,5 +261,3 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
 ---
 
 ![alt text](assets/un-iran.jpg)
-
-
