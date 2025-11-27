@@ -6,10 +6,5 @@ set -e
 # -------------------------------------------------- #
 echo "Install Drupal."
 
-cp .ddev/config.local.yaml.example .ddev/config.local.yaml
+cp .ddev/config.ci.yaml.example .ddev/config.ci.yaml
 ddev restart || ddev logs
-
-if [ ! -f ./web/themes/custom/server_theme/dist/css/style.css ]; then
-  echo "Theme compilation failed"
-  exit 1
-fi

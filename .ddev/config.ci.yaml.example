@@ -1,0 +1,12 @@
+web_environment:
+  - COMPOSER_EXIT_ON_PATCH_FAILURE=1
+hooks:
+  post-start:
+    # Private files directory.
+    - exec: mkdir -p /var/www/private
+
+    # Create a private key for Two-factor Authentication if not yet added.
+    - exec-host: ddev set-tfa-key
+
+    # Install profile without the heavier local-only steps.
+    - exec: drush site-install server -y --existing-config
