@@ -100,18 +100,13 @@ function server_general_node_access(NodeInterface $entity, string $op, AccountIn
 
 ```php
 function _server_general_node_access_country_hostname(NodeInterface $entity, string $op, AccountInterface $account): AccessResultInterface {
-  if ($op !== 'view' || $entity->bundle() !== 'country' || $entity->isPublished()) {
-    return AccessResult::neutral();
-  }
 
-  /** @var \Drupal\og\OgContextInterface $og_context */
+  // Get the current Organic Group context.
   $og_context = \Drupal::service('og.context');
   $current_group = $og_context->getGroup();
-  if (!$current_group instanceof NodeInterface || $current_group->id() !== $entity->id()) {
-    return AccessResult::neutral();
-  }
+  // ...
 
-  /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
+  // Check if the user is a member of the current Country group.
   $membership_manager = \Drupal::service('og.membership_manager');
   if (!$membership_manager->isMember($entity, $account->id())) {
     return AccessResult::neutral();
@@ -155,6 +150,7 @@ public function resolve(OgResolvedGroupCollectionInterface $collection) {
 
   // ...
   // Verify it's actually a group.
+  $country = $storage->load($nid);
   if ($this->groupTypeManager->isGroup($country->getEntityTypeId(), $country->bundle())) {
     // Add the group with the 'url.site' cache context since it depends on
     // the hostname.
