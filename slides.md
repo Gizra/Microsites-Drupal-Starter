@@ -1,459 +1,181 @@
+<style>
+.slide-caption { font-size: 0.8em; margin: 0 0 0.4em; line-height: 1.3; }
+.slide-url { font-size: 0.65em; margin: 0 0 0.6em; color: #5b87ff; word-break: break-word; }
+</style>
 
-![QR code](assets/qr-code.jpg)
-
----
-
-_`Pluggable Entity View Builder and the Amazing Drupal-Starter`_
-
-<div style="display: block; font-size: 0.7em; margin-top: 2em; color: darkgrey;">https://github.com/gizra/drupal-starter<div>
-
-<div style="display: block; font-size: 0.7em; margin-top: 2em; color: darkgrey;">@amitaibu</div>
-
----
+<div class="slide-url">https://microsites-drupal-starter.ddev.site:4443/</div>
 
 ![Welcome page](assets/welcome.jpg)
----
-
-## My Goals
-
-- ✅ Rigid flexibility
-- ✅ Easy maintenance
-- ✅ Easy to jump between projects
 
 ---
 
-## Creating and Theming a Paragraph
+<div class="slide-caption">Different Microsites have their own hostname.</div>
 
-- 🧱 Create Paragraph type & automatic tests: **~1h**
-- 🎨 Theming: **~2h**
+<div class="slide-url">https://iq.microsites-drupal-starter.ddev.site:4443/</div>
 
-*Theming is the time-consuming part*
-
+![Iraq site in English](assets/iraq-english.jpg)
 
 ---
 
-```
-https://drupal-starter.ddev.site:4443/style-guide
-```
+<div class="slide-caption">Different Microsites have their own languages defined.</div>
 
-![Style guide](assets/style-guide.jpg)
----
+<div class="slide-url">https://iq.microsites-drupal-starter.ddev.site:4443/ar</div>
 
-```bash
-server-theme-staff-card.html.twig
-```
-
-![](assets/long-twig.jpg)
+![Iraq site in Arabic](assets/iraq-arabic.jpg)
 
 ---
 
-## Reasoning with Twig Files
+<div class="slide-caption">Spain has English and Spanish, Arabic is not supported for this Microsite.</div>
 
-- 🧠 Lower the **cognitive load**
-- 🔄 Predictable structure
+<div class="slide-url">https://es.microsites-drupal-starter.ddev.site:4443/</div>
 
----
-
-<pre><code data-trim class="language-twig" data-line-numbers>
-# server-theme-text-decoration--italic.html
-
-<div class="italic">
-  {{ element }}
-</div>
-</code></pre>
+![Spain site in English](assets/spain-english.jpg)
 
 ---
 
-<pre><code data-trim class="language-twig" data-line-numbers>
-# server-theme-text-decoration--center.html.twig
+<div class="slide-url">https://es.microsites-drupal-starter.ddev.site:4443/es</div>
 
-<div class="text-center">
-  {{ element }}
-</div>
-
-</code></pre>
+![Spain site in Spanish](assets/spain-spanish.jpg)
 
 ---
 
-<pre><code data-trim class="language-twig" data-line-numbers>
-# server-theme-text-decoration--font-weight.html.twig
+<div class="slide-caption">Unpublished Microsites are accessible only for privileged users.</div>
 
-{% if font_weight == 'normal' %}
-  {% set weight_class = 'font-normal' %}
-{% elseif font_weight == 'medium' %}
-  {% set weight_class = 'font-medium' %}
-{% elseif font_weight == 'bold' %}
-  {% set weight_class = 'font-bold' %}
-{% endif %}
+<div class="slide-url">https://us.microsites-drupal-starter.ddev.site:4443/</div>
 
-<div class="{{ weight_class }}">
-  {{ element }}
-</div>
-
-
-</code></pre>
+![USA unpublished microsite](assets/usa-unpublished.jpg)
 
 ---
 
-<pre><code data-trim class="language-twig" data-line-numbers>
-# server-theme-text-decoration--responsive-font-size.html.twig
+<div class="slide-caption">The News node is published, but since it belongs to an unpublished Microsite, it's accessible only for privileged users.</div>
 
-{% if size == 'xs' %}
-  {% set size_classes = 'text-xs' %}
-{% elseif size == 'sm' %}
-  {% set size_classes = 'text-xs md:text-sm' %}
-{% elseif size == 'base' %}
-  {% set size_classes = 'text-sm md:text-base' %}
-{% elseif size == 'lg' %}
-  {% set size_classes = 'md:text-lg' %}
-{% elseif size == 'xl' %}
-  {% set size_classes = 'text-lg md:text-xl' %}
-{% elseif size == '2xl' %}
-  {% set size_classes = 'text-xl md:text-2xl' %}
-{% elseif size == '3xl' %}
-  {% set size_classes = 'text-xl md:text-2xl lg:text-3xl' %}
-{% endif %}
+<div class="slide-url">https://us.microsites-drupal-starter.ddev.site:4443/news/published-news-unpublished-country</div>
 
-<div class="{{ size_classes }}">
-  {{ element }}
-</div>
-
-
-</code></pre>
+![Published news in unpublished country](assets/usa-news.jpg)
 
 ---
 
-<pre><code data-trim class="language-twig" data-line-numbers>
-# server-theme-container-vertical-spacing.html.twig
+<div class="slide-caption">Anonymous user can't access the News node since the Microsite is unpublished.</div>
 
-{% macro getClass(align) %}
-  {% set classes = [
-    'flex flex-col gap-3 md:gap-5',
-    align == 'start' ? 'items-start',
-    align == 'center' ? 'items-center',
-    align == 'end' ? 'items-end',
-  ] | join(' ') | trim %}
-  {{ classes }}
-{% endmacro %}
-<div class="{{ _self.getClass(align) }}">
-  {{ items }}
-</div>
+<div class="slide-url">https://us.microsites-drupal-starter.ddev.site:4443/news/published-news-unpublished-country</div>
 
-</code></pre>
+![Anonymous view blocked](assets/usa-anon.jpg)
 
 ---
 
-<pre><code data-trim class="language-twig" data-line-numbers>
-# server-theme-container-narrow.html.twig
+<div class="slide-caption">We also have the concept of disabled languages per Microsite. Allowing admins to still work on a new language before making it public.</div>
 
-{% import '@server_theme/templates/server-theme-bg-color-base.html.twig' as bgColorBase %}
+<div class="slide-url">https://iq.microsites-drupal-starter.ddev.site:4443/es/node/13</div>
 
-{% set color_class = bgColorBase.getBgColor(bg_color) %}
-
-{% if color_class|trim != 'bg-transparent' %}
-  {% set py_class = 'py-8 md:py-10' %}
-{% endif %}
-
-<div class="{{ color_class }} {{ py_class }}">
-  <div class="container-narrow w-full">
-    {{ element }}
-  </div>
-</div>
-
-</code></pre>
+![Disabled language page](assets/disabled-language.jpg)
 
 ---
 
-<pre><code data-trim class="language-php" data-line-numbers>
-# src/ThemeTrait/ElementWrapThemeTrait.php
+<div class="slide-caption">The Country node is an Organic Group. Here we control the settings.</div>
 
-protected function wrapContainerNarrow(array $element, ?string $bg_color = NULL): array {
-  $element = $this->filterEmptyElements($element);
-  if (empty($element)) {
-    // Element is empty, so no need to wrap it.
-    return [];
+<div class="slide-url">https://iq.microsites-drupal-starter.ddev.site:4443/node/2/edit</div>
+
+![Country settings](assets/iraq-settings.jpg)
+
+---
+
+## First we start with the access
+
+```php
+/**
+ * Implements hook_node_access().
+ */
+function server_general_node_access(NodeInterface $entity, string $op, AccountInterface $account) {
+  $country_result = _server_general_node_access_country_hostname($entity, $op, $account);
+  if (!$country_result->isNeutral()) {
+    return $country_result;
   }
 
-  return [
-    '#theme' => 'server_theme_container_narrow',
-    '#element' => $element,
-    '#bg_color' => $bg_color,
-  ];
+  // ...
+
 }
-
-</code></pre>
-
----
-
-<pre><code data-trim class="language-php" data-line-numbers>
-# src/ThemeTrait/CtaThemeTrait.php
-
-protected function buildElementCta(string $title, array $body, Link $link): array {
-    $elements = [];
-
-    // Title.
-    $element = $title;
-    $element = $this->wrapTextResponsiveFontSize($element, '3xl');
-    $element = $this->wrapTextCenter($element);
-    $elements[] = $this->wrapTextFontWeight($element, 'bold');
-
-    // Text.
-    $elements[] = $this->wrapProseText($body);
-
-    // Button.
-    $elements[] = $this->buildButton($link->getText(), $link->getUrl(), 'primary', NULL, $link->getUrl()->isExternal());
-
-    $elements = $this->wrapContainerVerticalSpacingBig($elements, 'center');
-
-    $elements = $this->buildInnerElementLayout($elements, 'light-gray');
-    return $this->wrapContainerNarrow($elements);
-}
-</code></pre>
-
----
-
-```
-https://drupal-starter.ddev.site:4443/style-guide#element-quote
 ```
 
-![](assets/quote.jpg)
-
 ---
 
-## Two Types of Twig Files
-
-- 🎨 **Styling Twig**:
-  Applies **visual styles**
-  _e.g. spacing, font size, color, alignment, flex_
-
-- 🧱 **Layout Twig** *(rare)*:
-  Defines **layout** and **position**
-  _e.g. two columns_
-
----
-
-<pre><code data-trim class="language-php" data-line-numbers>
-# src/ThemeTrait/QuoteThemeTrait.php
-
-protected function buildElementQuote(array $image, array $quote, ?string $subtitle = NULL, ?string $image_credit = NULL): array {
-  $items = [];
-
-  // Quotation sign.
-  $items[] = ['#theme' => 'server_theme_quotation_sign'];
-
-  // Quote.
-  $element = $this->wrapTextResponsiveFontSize($quote, '2xl');
-  $items[] = $this->wrapTextColor($element, 'gray');
-
-  // Quote by.
-  $element = $this->wrapTextResponsiveFontSize($subtitle, 'sm');
-  $items[] = $this->wrapTextItalic($element);
-
-  // The photo credit on top of the image.
-  $credit = [];
-  if (!empty($image_credit)) {
-    $credit[] = ['#markup' => '© ' . $image_credit];
+```php
+function _server_general_node_access_country_hostname(NodeInterface $entity, string $op, AccountInterface $account): AccessResultInterface {
+  if ($op !== 'view' || $entity->bundle() !== 'country' || $entity->isPublished()) {
+    return AccessResult::neutral();
   }
 
-  return [
-    '#theme' => 'server_theme_element_layout__split_image_and_content',
-    '#items' => $this->wrapContainerVerticalSpacing($items),
-    '#image' => $image,
-    '#credit' => $credit,
-  ];
+  /** @var \Drupal\og\OgContextInterface $og_context */
+  $og_context = \Drupal::service('og.context');
+  $current_group = $og_context->getGroup();
+  if (!$current_group instanceof NodeInterface || $current_group->id() !== $entity->id()) {
+    return AccessResult::neutral();
+  }
+
+  /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
+  $membership_manager = \Drupal::service('og.membership_manager');
+  if (!$membership_manager->isMember($entity, $account->id())) {
+    return AccessResult::neutral();
+  }
+
+  return AccessResult::allowed()
+    ->addCacheableDependency($entity)
+    ->addCacheContexts(['url.site', 'og_membership_state'])
+    ->addCacheTags(['og_membership_list']);
 }
-</code></pre>
-
----
-
-<pre><code data-trim class="language-twig" data-line-numbers="3-10|3,10|4-7|9">
-# server-theme-element-layout--split-image-and-content.html.twig
-
-<div>
-  <div>
-    <div>{{ image }}</div>
-    <div>{{ credit }}</div>
-  </div>
-
-  <div>{{ items }}</div>
-</div>
-
-</code></pre>
-
----
-
-<pre><code data-trim class="language-twig" data-line-numbers>
-# server-theme-element-layout--split-image-and-content.html.twig
-
-<div class="flex flex-col sm:grid sm:grid-rows-1 md:grid-cols-2 gap-2 md:gap-8 lg:gap-10 overflow-hidden bg-gray-50">
-
-  {#
-  We use grid and row/col start to position both the image and the text on
-  the same cell.
-  #}
-  <div class="w-full grid grid-rows-1">
-    <figure class="row-start-1 col-start-1 child-object-cover h-full">
-      {{ image }}
-    </figure>
-
-    {% if credit  %}
-      <div class="row-start-1 col-start-1 self-end h-fit w-fit text-xs bg-white opacity-70 p-2">
-        {{ credit }}
-      </div>
-    {% endif %}
-  </div>
-
-  <div class="pt-5 pb-8 px-5 lg:py-8 lg:max-w-lg my-auto">
-    {{ items }}
-  </div>
-</div>
-
-</code></pre>
-
----
-
-## Where Is This Element Coming From?
-
-- 🧩 Block?
-
-- 🎛 Formatter?
-
-- 🧙‍♂️ Preprocessed?
-
-- 🕵️‍♂️ **Inspecting the CSS class**
-
-Note: 😵‍💫 Too much reverse-engineering
-
----
-
-## PEVB Controls Everything (via Code)
-
-- 🧱 No **Layout Manager modules**
-- 🧩 No **Field UI** for field order
-- 🪄 No **hooks** or **preprocess** magic
-
----
-
-## PEVB Controls Everything (via Code)
-
-- ✅ **PEVB** fetchs the data
-- ✅ Passes to `ThemeTrait`s for display
-- ✅ If it looks right on the style guide, it’s right
-
----
-
-![News nodes](assets/news.jpg)
-
----
-
-<pre><code data-trim class="language-php" data-line-numbers>
-# src/Plugin/EntityViewBuilder/NodeNews.php
-
-public function buildFull(array $build, NodeInterface $entity) {
-  return $build;
-}
-</code></pre>
-
----
-
-
-![Blank News node](assets/news-blank.jpg)
-
----
-
-<pre><code data-trim class="language-php" data-line-numbers>
-# src/Plugin/EntityViewBuilder/NodeNews.php
-
-public function buildFull(array $build, NodeInterface $entity) {
-  // The node's label.
-  $node_type = $this->entityTypeManager->getStorage('node_type')->load($entity->bundle());
-  $label = $node_type->label();
-
-  // The hero responsive image.
-  $medias = $entity->get('field_featured_image')->referencedEntities();
-  $image = $this->buildEntities($medias, 'hero');
-
-  $element = $this->buildElementNodeNews(
-    $entity->label(),
-    $label,
-    $this->getFieldOrCreatedTimestamp($entity, 'field_publish_date'),
-    $image,
-    $this->buildProcessedText($entity),
-    $this->buildTags($entity),
-    $this->buildSocialShare($entity),
-  );
-
-  $build[] = $element;
-
-  return $build;
-}
-</code></pre>
-
----
-<pre><code data-trim class="language-php" data-line-numbers>
-# src/ThemeTrait/ElementNodeNewsThemeTrait.php
-
-protected function buildElementNodeNews(string $title, string $label, int $timestamp, array $image, array $body, array $tags, array $social_share): array {
-  $elements = [];
-
-  // Header.
-  $element = $this->buildHeader(
-    $title,
-    $label,
-    $timestamp
-  );
-  $elements[] = $this->wrapContainerWide($element);
-
-  // Main content and sidebar.
-  $element = $this->buildMainAndSidebar(
-    $image,
-    $this->wrapProseText($body),
-    $tags,
-    $social_share,
-  );
-  $elements[] = $this->wrapContainerWide($element);
-
-  $elements = $this->wrapContainerVerticalSpacingBig($elements);
-  return $this->wrapContainerBottomPadding($elements);
-}
-</code></pre>
-
----
-
-## Why Not Layout Builder?
-
-- ❌ Clients don’t need full layout freedom
-- ❌ Unlimited flexibility = unlimited QA surface
-
----
-
-## Why Not Layout Builder?
-
-- ✅ We provide **limited, intentional flexibility**
-- ✅ Clients can **mix & match Paragraphs**
-- ✅ But always within **known, tested layouts**
-
----
-
-## Code Flow
-
-1. 🧩 Create a ThemeTrait
-2. 🎨 Add to the Style Guide
-3. 🔌 Wire it to PEVB
-
----
-
-```bash
-ddev phpstan
 ```
 
-![](assets/phpstan.jpg)
+---
+
+```php
+#[OgGroupResolver(
+  id: 'country_hostname',
+  label: new TranslatableMarkup('Country from hostname'),
+  description: new TranslatableMarkup('Resolves the Country group based on the current hostname.')
+)]
+class Country extends OgRouteGroupResolverBase {
+```
 
 ---
-## Try It on Drupal-Starter
 
-1. 📚 Gizra’s **codified knowledge base**
-2. 🚀 Every new project **starts from this**
-3. 🔁 We constantly **feed it back** with new learnings
+```php
+public function resolve(OgResolvedGroupCollectionInterface $collection) {
+  // ...
+  // Get the current hostname from the request.
+  $hostname = $request->getHost();
 
-👉 https://github.com/gizra/drupal-starter
+
+  // ...
+  // Query Country nodes that have the current hostname in field_hostnames.
+  $query = $storage->getQuery()
+    ->condition('type', 'country')
+    ->condition('field_hostnames', $hostname)
+    ->accessCheck(FALSE)
+    ->range(0, 1);
+
+
+  // ...
+  // Verify it's actually a group.
+  if ($this->groupTypeManager->isGroup($country->getEntityTypeId(), $country->bundle())) {
+    // Add the group with the 'url.site' cache context since it depends on
+    // the hostname.
+    $collection->addGroup($country, ['url.site']);
+
+    // Since we found a specific Country based on the hostname, we can be
+    // certain this is the correct group context and stop propagation.
+    $this->stopPropagation();
+  }
+}
+```
+
+---
+
+
+```yaml
+# og.settings.yml
+
+# ...
+group_resolvers:
+  - route_group
+  - route_group_content
+  - country_hostname
+```
