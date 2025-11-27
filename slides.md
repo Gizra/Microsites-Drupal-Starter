@@ -1,3 +1,16 @@
+
+![alt text](assets/un-congo.jpg)
+
+---
+
+![alt text](assets/un-haiti.jpg)
+
+---
+
+![alt text](assets/un-iran.jpg)
+
+---
+
 <style>
 .slide-caption { font-size: 0.8em; margin: 0 0 0.4em; line-height: 1.3; }
 .slide-url { font-size: 0.65em; margin: 0 0 0.6em; color: #5b87ff; word-break: break-word; }
@@ -5,9 +18,11 @@
 
 <div class="slide-url">https://microsites-drupal-starter.ddev.site:4443/</div>
 
-![Welcome page](assets/welcome.jpg)
+![](assets/welcome.jpg)
 
 ---
+
+
 
 <div class="slide-caption">Different Microsites have their own hostname.</div>
 
@@ -249,15 +264,3 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
 ---
 
 ![](assets/og-permissions-country.jpg)
-
----
-
-![alt text](assets/un-congo.jpg)
-
----
-
-![alt text](assets/un-haiti.jpg)
-
----
-
-![alt text](assets/un-iran.jpg)
