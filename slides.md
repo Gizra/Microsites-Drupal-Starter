@@ -81,7 +81,7 @@
 
 ## First we start with the access
 
-```php
+<pre><code data-trim class="language-php" data-line-numbers>
 /**
  * Implements hook_node_access().
  */
@@ -94,11 +94,11 @@ function server_general_node_access(NodeInterface $entity, string $op, AccountIn
   // ...
 
 }
-```
+</code></pre>
 
 ---
 
-```php
+<pre><code data-trim class="language-php" data-line-numbers>
 function _server_general_node_access_country_hostname(NodeInterface $entity, string $op, AccountInterface $account): AccessResultInterface {
 
   // Get the current Organic Group context.
@@ -117,22 +117,22 @@ function _server_general_node_access_country_hostname(NodeInterface $entity, str
     ->addCacheContexts(['url.site', 'og_membership_state'])
     ->addCacheTags(['og_membership_list']);
 }
-```
+</code></pre>
 
 ---
 
-```php
+<pre><code data-trim class="language-php" data-line-numbers>
 #[OgGroupResolver(
   id: 'country_hostname',
   label: new TranslatableMarkup('Country from hostname'),
   description: new TranslatableMarkup('Resolves the Country group based on the current hostname.')
 )]
 class Country extends OgRouteGroupResolverBase {
-```
+</code></pre>
 
 ---
 
-```php
+<pre><code data-trim class="language-php" data-line-numbers>
 public function resolve(OgResolvedGroupCollectionInterface $collection) {
   // ...
   // Get the current hostname from the request.
@@ -161,12 +161,12 @@ public function resolve(OgResolvedGroupCollectionInterface $collection) {
     $this->stopPropagation();
   }
 }
-```
+</code></pre>
 
 ---
 
 
-```yaml
+<pre><code data-trim class="language-yaml" data-line-numbers="1-7|7">
 # og.settings.yml
 
 # ...
@@ -174,4 +174,4 @@ group_resolvers:
   - route_group
   - route_group_content
   - country_hostname
-```
+</code></pre>
