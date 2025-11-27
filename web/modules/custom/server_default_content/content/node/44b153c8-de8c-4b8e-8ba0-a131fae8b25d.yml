@@ -71,7 +71,7 @@ default:
   field_country_code:
     -
       value: iq
-  field_hostnames:
+  field_hostname:
     -
       value: iq.microsites-drupal-starter.ddev.site
   field_languages:

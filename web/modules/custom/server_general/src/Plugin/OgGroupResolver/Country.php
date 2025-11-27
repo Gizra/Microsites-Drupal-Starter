@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * Resolves the group from the current hostname.
  *
  * This plugin inspects the current request hostname and checks if it matches
- * any Country entity's field_hostnames values.
+ * any Country entity's field_hostname value.
  */
 #[OgGroupResolver(
   id: 'country_hostname',
@@ -64,10 +64,10 @@ class Country extends OgRouteGroupResolverBase {
 
     $storage = $this->entityTypeManager->getStorage('node');
 
-    // Query Country nodes that have the current hostname in field_hostnames.
+    // Query Country nodes that have the current hostname in field_hostname.
     $query = $storage->getQuery()
       ->condition('type', 'country')
-      ->condition('field_hostnames', $hostname)
+      ->condition('field_hostname', $hostname)
       ->accessCheck(FALSE)
       ->range(0, 1);
 

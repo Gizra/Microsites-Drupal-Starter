@@ -1,19 +1,19 @@
-uuid: abd1ed1e-662b-46dd-a891-b78849393b8d
+uuid: c0c5f5c9-8cf7-4306-991c-79e86119a794
 langcode: en
 status: true
 dependencies:
   config:
-    - field.storage.node.field_hostnames
+    - field.storage.node.field_hostname
     - node.type.country
-id: node.country.field_hostnames
-field_name: field_hostnames
+id: node.country.field_hostname
+field_name: field_hostname
 entity_type: node
 bundle: country
-label: Hostnames
+label: Hostname
 description: ''
 required: true
 translatable: false
-default_value: {  }
+default_value: { }
 default_value_callback: ''
-settings: {  }
+settings: { }
 field_type: string

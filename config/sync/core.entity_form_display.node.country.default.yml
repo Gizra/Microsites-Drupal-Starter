@@ -5,7 +5,7 @@ dependencies:
   config:
     - field.field.node.country.body
     - field.field.node.country.field_country_code
-    - field.field.node.country.field_hostnames
+    - field.field.node.country.field_hostname
     - field.field.node.country.field_languages
     - node.type.country
   module:
@@ -39,7 +39,7 @@ content:
     region: content
     settings: {  }
     third_party_settings: {  }
-  field_hostnames:
+  field_hostname:
     type: string_textfield
     weight: 122
     region: content

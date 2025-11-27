@@ -44,7 +44,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
       'title' => 'Test Unpublished Country',
       'status' => NodeInterface::NOT_PUBLISHED,
       'field_country_code' => 'uc',
-      'field_hostnames' => [self::UNPUBLISHED_COUNTRY_HOST],
+      'field_hostname' => self::UNPUBLISHED_COUNTRY_HOST,
       'field_languages' => ['en'],
     ]);
 
@@ -53,7 +53,7 @@ class ServerGeneralCountryGroupAccessTest extends ServerGeneralTestBase {
       'title' => 'Test Published Country',
       'status' => NodeInterface::PUBLISHED,
       'field_country_code' => 'pc',
-      'field_hostnames' => [self::PUBLISHED_COUNTRY_HOST],
+      'field_hostname' => self::PUBLISHED_COUNTRY_HOST,
       'field_languages' => ['en'],
     ]);
   }
