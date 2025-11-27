@@ -161,8 +161,7 @@ class ParagraphCountryInfo extends EntityViewBuilderPluginAbstract {
         continue;
       }
 
-      $hostname_values = $country->get('field_hostname')->getValue();
-      $hostname = $hostname_values[0]['value'] ?? '';
+      $hostname = $country->get('field_hostname')->value ?? '';
       if (empty($hostname)) {
         continue;
       }
