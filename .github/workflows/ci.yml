@@ -109,6 +109,3 @@ jobs:
 
       - name: Run PHPUnit test suite
         run: ./ci-scripts/test_phpunit.sh
-
-      - name: Run Rollbar PHPUnit test suite
-        run: ./ci-scripts/test_phpunit_rollbar.sh

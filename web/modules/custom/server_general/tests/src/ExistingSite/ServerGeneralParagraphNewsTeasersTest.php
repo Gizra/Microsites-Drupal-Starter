@@ -47,7 +47,7 @@ class ServerGeneralParagraphNewsTeasersTest extends ServerGeneralParagraphTestBa
       'title' => 'Test Published Country',
       'status' => NodeInterface::PUBLISHED,
       'field_country_code' => 'pc',
-      'field_hostnames' => [self::PUBLISHED_COUNTRY_HOST],
+      'field_hostname' => self::PUBLISHED_COUNTRY_HOST,
       'field_languages' => ['en'],
     ]);
 

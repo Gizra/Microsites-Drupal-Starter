@@ -72,7 +72,7 @@ default:
   field_country_code:
     -
       value: es
-  field_hostnames:
+  field_hostname:
     -
       value: es.microsites-drupal-starter.ddev.site
   field_languages:

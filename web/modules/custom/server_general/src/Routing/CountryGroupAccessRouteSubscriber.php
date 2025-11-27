@@ -182,7 +182,13 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
       ]));
 
       return AccessResult::allowed()
-        ->addCacheContexts(['url.site', 'languages:language_interface']);
+        ->addCacheContexts([
+          'url.site',
+          'languages:language_interface',
+          'user.permissions',
+          'og_membership_state',
+        ])
+        ->addCacheTags(['og_membership_list']);
     }
 
     // Language is not available for regular users.
@@ -202,13 +208,8 @@ final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
     $request = $this->requestStack->getCurrentRequest();
 
     $current_hostname = $request->getHost();
-    $hostnames = $country->get('field_hostnames');
-    if ($hostnames->isEmpty()) {
-      return;
-    }
+    $correct_hostname = $country->get('field_hostname')->value ?? '';
 
-    $correct_hostname = $hostnames->first()->getString();
-    // Already on correct hostname.
     if (!$correct_hostname || $correct_hostname === $current_hostname) {
       return;
     }

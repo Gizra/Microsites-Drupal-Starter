@@ -5,7 +5,7 @@ dependencies:
   config:
     - field.field.node.country.body
     - field.field.node.country.field_country_code
-    - field.field.node.country.field_hostnames
+    - field.field.node.country.field_hostname
     - field.field.node.country.field_languages
     - node.type.country
   module:
@@ -32,7 +32,7 @@ content:
     third_party_settings: {  }
     weight: 104
     region: content
-  field_hostnames:
+  field_hostname:
     type: string
     label: above
     settings:
