@@ -168,12 +168,14 @@ function _server_general_node_access_country_hostname(NodeInterface $entity, str
   $og_context = \Drupal::service('og.context');
   $current_group = $og_context->getGroup();
   if (!$current_group instanceof NodeInterface || $current_group->id() !== $entity->id()) {
+    // Not viewing the Country on its hostname.
     return AccessResult::neutral();
   }
 
   /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
   $membership_manager = \Drupal::service('og.membership_manager');
   if (!$membership_manager->isMember($entity, $account->id())) {
+    // User is not a member of the Country group.
     return AccessResult::neutral();
   }
 
