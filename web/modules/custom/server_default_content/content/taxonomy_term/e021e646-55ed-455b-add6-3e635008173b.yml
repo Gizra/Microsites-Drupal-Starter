@@ -34,7 +34,7 @@ default:
       tag: link
       attributes:
         rel: canonical
-        href: 'https://drupal-starter.ddev.site:4443/taxonomy/term/2'
+        href: 'https://microsites-drupal-starter.ddev.site:4443/taxonomy/term/2'
   path:
     -
       alias: ''

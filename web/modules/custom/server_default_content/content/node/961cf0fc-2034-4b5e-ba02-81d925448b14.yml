@@ -1,0 +1,151 @@
+_meta:
+  version: '1.0'
+  entity_type: node
+  uuid: 961cf0fc-2034-4b5e-ba02-81d925448b14
+  bundle: news
+  default_langcode: en
+  depends:
+    d5c007fd-4537-4f6c-b205-1f31889bd67f: user
+    5770c310-d0e1-4ae9-84c0-852c32a1a69b: media
+    e6127767-4628-42a7-bd6d-b4d482f6bcc4: node
+default:
+  revision_uid:
+    -
+      entity: d5c007fd-4537-4f6c-b205-1f31889bd67f
+  status:
+    -
+      value: true
+  uid:
+    -
+      entity: d5c007fd-4537-4f6c-b205-1f31889bd67f
+  title:
+    -
+      value: 'The module lost connection… with reality'
+  created:
+    -
+      value: 1761831511
+  promote:
+    -
+      value: true
+  sticky:
+    -
+      value: false
+  moderation_state:
+    -
+      value: published
+  metatag:
+    -
+      tag: meta
+      attributes:
+        name: title
+        content: 'The module lost connection… with reality | Drupal Starter'
+    -
+      tag: link
+      attributes:
+        rel: canonical
+        href: 'https://microsites-drupal-starter.ddev.site:4443/news/module-lost-connection-reality'
+    -
+      tag: meta
+      attributes:
+        property: 'og:title'
+        content: 'The module lost connection… with reality'
+    -
+      tag: meta
+      attributes:
+        property: 'og:description'
+        content: 'After an update, it started thinking it was part of core.'
+    -
+      tag: meta
+      attributes:
+        property: 'og:image'
+        content: 'https://microsites-drupal-starter.ddev.site:4443/sites/default/files/benches-800x600_55_1.jpg'
+  path:
+    -
+      alias: /news/module-lost-connection-reality
+      langcode: en
+      pathauto: 1
+  content_translation_source:
+    -
+      value: und
+  content_translation_outdated:
+    -
+      value: false
+  field_body:
+    -
+      value: '<p>After an update, it started thinking it was part of core.</p>'
+      format: basic_html
+  field_featured_image:
+    -
+      entity: 5770c310-d0e1-4ae9-84c0-852c32a1a69b
+  og_audience:
+    -
+      entity: e6127767-4628-42a7-bd6d-b4d482f6bcc4
+translations:
+  es:
+    status:
+      -
+        value: true
+    uid:
+      -
+        entity: d5c007fd-4537-4f6c-b205-1f31889bd67f
+    title:
+      -
+        value: 'El módulo perdió la conexión... con la realidad'
+    created:
+      -
+        value: 1761831672
+    promote:
+      -
+        value: true
+    sticky:
+      -
+        value: false
+    revision_translation_affected:
+      -
+        value: true
+    moderation_state:
+      -
+        value: published
+    metatag:
+      -
+        tag: meta
+        attributes:
+          name: title
+          content: 'El módulo perdió la conexión... con la realidad | Drupal Starter'
+      -
+        tag: link
+        attributes:
+          rel: canonical
+          href: 'https://microsites-drupal-starter.ddev.site:4443/es/news/el-modulo-perdio-la-conexion-con-la-realidad'
+      -
+        tag: meta
+        attributes:
+          property: 'og:title'
+          content: 'El módulo perdió la conexión... con la realidad'
+      -
+        tag: meta
+        attributes:
+          property: 'og:description'
+          content: 'After an update, it started thinking it was part of core.'
+      -
+        tag: meta
+        attributes:
+          property: 'og:image'
+          content: 'https://microsites-drupal-starter.ddev.site:4443/sites/default/files/benches-800x600_55_1.jpg'
+    path:
+      -
+        alias: /news/el-modulo-perdio-la-conexion-con-la-realidad
+        langcode: es
+        pathauto: 1
+    content_translation_source:
+      -
+        value: en
+    content_translation_outdated:
+      -
+        value: false
+    field_featured_image:
+      -
+        entity: 5770c310-d0e1-4ae9-84c0-852c32a1a69b
+    og_audience:
+      -
+        entity: e6127767-4628-42a7-bd6d-b4d482f6bcc4

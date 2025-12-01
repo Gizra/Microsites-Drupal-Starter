@@ -1,0 +1,30 @@
+uuid: 6d75f42c-289a-47d5-ab7e-74e8f3db17dd
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.og_audience
+    - node.type.country
+    - node.type.landing_page
+  module:
+    - og
+id: node.landing_page.og_audience
+field_name: og_audience
+entity_type: node
+bundle: landing_page
+label: 'Groups audience'
+description: 'OG group audience reference field.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'og:default'
+  handler_settings:
+    target_bundles:
+      country: country
+    sort:
+      field: _none
+      direction: ASC
+    auto_create_bundle: ''
+field_type: og_standard_reference

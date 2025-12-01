@@ -8,6 +8,7 @@ dependencies:
     - field.field.node.news.field_featured_image
     - field.field.node.news.field_publish_date
     - field.field.node.news.field_tags
+    - field.field.node.news.og_audience
     - node.type.news
   module:
     - datetime
@@ -62,4 +63,5 @@ content:
     region: content
 hidden:
   langcode: true
+  og_audience: true
   search_api_excerpt: true

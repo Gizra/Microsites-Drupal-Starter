@@ -14,7 +14,7 @@ default:
       value: JaneDoe
   pass:
     -
-      value: U$S$Eu4620kWfYkoM5t.MJfJLn7VFJPoHcLn.RCoV855E.Mwmcfj15Io
+      value: $2y$10$Q73GZBvCdWAr/HAtOKRIPO52BgAi4.Cl0NCIbkmb9xtUovoWLF2uC
       existing: ''
       pre_hashed: false
   mail:
@@ -53,7 +53,7 @@ default:
       tag: link
       attributes:
         rel: canonical
-        href: 'https://drupal-starter.ddev.site:4443/user/7'
+        href: 'https://microsites-drupal-starter.ddev.site:4443/user/7'
   path:
     -
       alias: ''
@@ -61,7 +61,7 @@ default:
       pathauto: 1
   field_last_password_reset:
     -
-      value: '2024-11-21T22:24:35'
+      value: '2025-10-26T15:14:45'
   field_password_expiration:
     -
       value: false

@@ -1,0 +1,30 @@
+uuid: 3c77baf6-69d2-48ed-8166-24906bdaa225
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - options
+id: node.field_country_code
+field_name: field_country_code
+entity_type: node
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: es
+      label: Spain
+    -
+      value: iq
+      label: Iraq
+    -
+      value: us
+      label: 'United States'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

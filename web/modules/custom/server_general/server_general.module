@@ -6,11 +6,13 @@
  */
 
 use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Entity\ContentEntityFormInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Url;
 use Drupal\config_pages\Entity\ConfigPages;
 use Drupal\media\IFrameMarkup;
 use Drupal\node\NodeInterface;
@@ -133,12 +135,62 @@ function server_general_field_widget_single_element_moderation_state_default_for
 }
 
 /**
- * Implements hook_entity_access().
+ * Implements hook_node_access().
  */
 function server_general_node_access(NodeInterface $entity, string $op, AccountInterface $account) {
+  $country_result = _server_general_node_access_country_hostname($entity, $op, $account);
+  if (!$country_result->isNeutral()) {
+    return $country_result;
+  }
+
+  return _server_general_node_access_locked_pages($entity, $op);
+}
+
+/**
+ * Determines access when browsing a Country on its hostname.
+ *
+ * @param \Drupal\node\NodeInterface $entity
+ *   The node entity.
+ * @param string $op
+ *   The operation.
+ * @param \Drupal\Core\Session\AccountInterface $account
+ *   The user account.
+ *
+ * @return \Drupal\Core\Access\AccessResultInterface
+ *   The access result.
+ */
+function _server_general_node_access_country_hostname(NodeInterface $entity, string $op, AccountInterface $account): AccessResultInterface {
+  if ($op !== 'view' || $entity->bundle() !== 'country' || $entity->isPublished()) {
+    return AccessResult::neutral();
+  }
+
+  /** @var \Drupal\og\OgContextInterface $og_context */
+  $og_context = \Drupal::service('og.context');
+  $current_group = $og_context->getGroup();
+  if (!$current_group instanceof NodeInterface || $current_group->id() !== $entity->id()) {
+    // Not viewing the Country on its hostname.
+    return AccessResult::neutral();
+  }
+
+  /** @var \Drupal\og\MembershipManagerInterface $membership_manager */
+  $membership_manager = \Drupal::service('og.membership_manager');
+  if (!$membership_manager->isMember($entity, $account->id())) {
+    // User is not a member of the Country group.
+    return AccessResult::neutral();
+  }
+
+  return AccessResult::allowed()
+    ->addCacheableDependency($entity)
+    ->addCacheContexts(['url.site', 'og_membership_state'])
+    ->addCacheTags(['og_membership_list']);
+}
+
+/**
+ * Applies locked pages restrictions.
+ */
+function _server_general_node_access_locked_pages(NodeInterface $entity, string $op): AccessResultInterface {
   /** @var \Drupal\server_general\LockedPages $locked_pages_service */
   $locked_pages_service = \Drupal::service('server_general.locked_pages');
-  // The bundles that can be locked.
   $bundles = $locked_pages_service->getReferencedBundles();
 
   if (!in_array($entity->bundle(), $bundles)) {
@@ -146,11 +198,12 @@ function server_general_node_access(NodeInterface $entity, string $op, AccountIn
   }
 
   $main_settings = $locked_pages_service->getMainSettings();
-
   if ($op === 'delete' && $main_settings instanceof ConfigPages && $locked_pages_service->isNodeLocked($entity)) {
-    // Add cache tags to the cache metadata.
     $cache_tags = $main_settings->getCacheTags();
-    return AccessResult::forbidden()->addCacheableDependency($entity)->addCacheTags($cache_tags);
+
+    return AccessResult::forbidden()
+      ->addCacheableDependency($entity)
+      ->addCacheTags($cache_tags);
   }
 
   return AccessResult::neutral();
@@ -174,6 +227,9 @@ function server_general_node_predelete(NodeInterface $entity) {
  * Implements hook_node_presave().
  */
 function server_general_node_presave(NodeInterface $entity) {
+  // Set OG audience based on current group context.
+  _server_general_set_og_audience_from_context($entity);
+
   /** @var \Drupal\server_general\LockedPages $locked_pages_service */
   $locked_pages_service = \Drupal::service('server_general.locked_pages');
 
@@ -221,6 +277,15 @@ function server_general_form_alter(array &$form, FormStateInterface $form_state)
     return;
   }
 
+  // Disable OG audience field when in group context.
+  _server_general_disable_og_audience_field($form, $entity);
+
+  // Filter language field options based on Country group context.
+  // Use #after_build because options aren't populated yet in form_alter.
+  if (isset($form['langcode'])) {
+    $form['langcode']['#after_build'][] = '_server_general_filter_language_field';
+  }
+
   // Check that we are on the node edit page.
   if ($form['#form_id'] !== "node_{$entity->bundle()}_edit_form") {
     return;
@@ -238,6 +303,116 @@ function server_general_form_alter(array &$form, FormStateInterface $form_state)
   // @See server_general_module_implements_alter().
   unset($form['actions']['delete_translation']);
   $form['status']['#access'] = FALSE;
+}
+
+/**
+ * Set OG audience from current group context.
+ *
+ * @param \Drupal\node\NodeInterface $entity
+ *   The node entity.
+ */
+function _server_general_set_og_audience_from_context(NodeInterface $entity) {
+  if (!$entity->isNew()) {
+    return;
+  }
+
+  if (!$entity->hasField('og_audience')) {
+    return;
+  }
+
+  if (!$entity->get('og_audience')->isEmpty()) {
+    return;
+  }
+
+  /** @var \Drupal\og\OgContextInterface $og_context */
+  $og_context = \Drupal::service('og.context');
+  $current_group = $og_context->getGroup();
+
+  if (!$current_group) {
+    return;
+  }
+
+  if (!$current_group instanceof NodeInterface) {
+    return;
+  }
+
+  $entity->set('og_audience', ['target_id' => $current_group->id()]);
+}
+
+/**
+ * Disable OG audience field when in group context.
+ *
+ * @param array $form
+ *   The form array.
+ * @param \Drupal\node\NodeInterface $entity
+ *   The node entity.
+ */
+function _server_general_disable_og_audience_field(array &$form, NodeInterface $entity) {
+  if (!isset($form['og_audience'])) {
+    return;
+  }
+
+  /** @var \Drupal\og\OgContextInterface $og_context */
+  $og_context = \Drupal::service('og.context');
+  $current_group = $og_context->getGroup();
+
+  if (!$current_group) {
+    return;
+  }
+
+  // Disable the OG audience field in group context.
+  $form['og_audience']['#access'] = FALSE;
+}
+
+/**
+ * Filter language field options based on Country group context.
+ *
+ * After build callback for langcode field.
+ *
+ * @param array $element
+ *   The form element.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The form state.
+ *
+ * @return array
+ *   The modified form element.
+ */
+function _server_general_filter_language_field(array $element, FormStateInterface $form_state) {
+  /** @var \Drupal\og\OgContextInterface $og_context */
+  $og_context = \Drupal::service('og.context');
+  $current_group = $og_context->getGroup();
+
+  if (!$current_group) {
+    return $element;
+  }
+
+  if (!$current_group instanceof NodeInterface) {
+    return $element;
+  }
+
+  // Get allowed languages from the Country group.
+  $allowed_languages = [];
+  foreach ($current_group->get('field_languages') as $item) {
+    $allowed_languages[] = $item->value;
+  }
+
+  if (empty($allowed_languages)) {
+    return $element;
+  }
+
+  if (!isset($element['widget'][0]['value']['#options'])) {
+    return $element;
+  }
+
+  // Filter the langcode field options to only show allowed languages.
+  $options = &$element['widget'][0]['value']['#options'];
+  foreach ($options as $langcode => $label) {
+    if (!in_array($langcode, $allowed_languages)) {
+      unset($options[$langcode]);
+    }
+  }
+
+  return $element;
 }
 
 /**
@@ -351,5 +526,38 @@ function server_general_preprocess_media_oembed_iframe(array &$variables) {
   // @see https://support.google.com/youtube/answer/171780
   if (strpos((string) $variables['media'], 'youtube.com') !== FALSE) {
     $variables['media'] = IFrameMarkup::create(str_replace('youtube.com/', 'youtube-nocookie.com/', $variables['media']));
+  }
+}
+
+/**
+ * Implements hook_language_switch_links_alter().
+ */
+function server_general_language_switch_links_alter(array &$links, string $type, Url $path) {
+  /** @var \Drupal\og\OgContextInterface $og_context */
+  $og_context = \Drupal::service('og.context');
+
+  // Get the current group context (resolved by hostname).
+  $current_group = $og_context->getGroup();
+
+  if (!$current_group) {
+    // No group context, don't filter languages.
+    return;
+  }
+
+  $allowed_languages = [];
+  foreach ($current_group->get('field_languages') as $item) {
+    $allowed_languages[] = $item->value;
+  }
+
+  if (empty($allowed_languages)) {
+    // No languages configured, don't filter.
+    return;
+  }
+
+  // Filter out languages not allowed for this Country.
+  foreach ($links as $langcode => $link) {
+    if (!in_array($langcode, $allowed_languages)) {
+      unset($links[$langcode]);
+    }
   }
 }

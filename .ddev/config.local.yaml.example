@@ -42,10 +42,7 @@ hooks:
     # Enable Devel.
     - exec: drush pm-enable devel -y
 
-    # @see https://www.drupal.org/node/947312
-    - exec: drush user-block --uid=1
-
-    # Login as AdminOne.
+    # Login as admin.
     - exec-host: ddev login
 
   post-import-db:

@@ -51,4 +51,4 @@ default:
       tag: link
       attributes:
         rel: canonical
-        href: 'https://drupal-starter.ddev.site:4443/homepage'
+        href: 'https://microsites-drupal-starter.ddev.site:4443/homepage'

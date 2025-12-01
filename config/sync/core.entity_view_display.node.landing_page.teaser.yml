@@ -6,6 +6,7 @@ dependencies:
     - core.entity_view_mode.node.teaser
     - field.field.node.landing_page.field_is_title_hidden
     - field.field.node.landing_page.field_paragraphs
+    - field.field.node.landing_page.og_audience
     - node.type.landing_page
   module:
     - user
@@ -14,6 +15,11 @@ targetEntityType: node
 bundle: landing_page
 mode: teaser
 content:
+  content_moderation_control:
+    settings: {  }
+    third_party_settings: {  }
+    weight: -20
+    region: content
   links:
     settings: {  }
     third_party_settings: {  }
@@ -23,4 +29,5 @@ hidden:
   field_is_title_hidden: true
   field_paragraphs: true
   langcode: true
+  og_audience: true
   search_api_excerpt: true

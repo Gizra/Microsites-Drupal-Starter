@@ -1,0 +1,85 @@
+_meta:
+  version: '1.0'
+  entity_type: node
+  uuid: 5b128fa6-9dfa-4c40-ab47-2e002a29cc46
+  bundle: news
+  default_langcode: en
+  depends:
+    11318276-1099-48d3-ae54-1e4746558d2e: user
+    20e0c193-81fb-4de1-a876-0986f5dde59a: media
+    f143235c-7caf-41dd-980f-9bdceff17475: node
+default:
+  revision_uid:
+    -
+      entity: 11318276-1099-48d3-ae54-1e4746558d2e
+  status:
+    -
+      value: true
+  uid:
+    -
+      entity: 11318276-1099-48d3-ae54-1e4746558d2e
+  title:
+    -
+      value: 'Published News for an Unpublished Country'
+  created:
+    -
+      value: 1763821247
+  promote:
+    -
+      value: true
+  sticky:
+    -
+      value: false
+  revision_translation_affected:
+    -
+      value: true
+  moderation_state:
+    -
+      value: published
+  metatag:
+    -
+      tag: meta
+      attributes:
+        name: title
+        content: 'Published News for an Unpublished Country | Microsites Demo'
+    -
+      tag: link
+      attributes:
+        rel: canonical
+        href: 'https://microsites-drupal-starter.ddev.site:4443/news/published-news-unpublished-country'
+    -
+      tag: meta
+      attributes:
+        property: 'og:title'
+        content: 'Published News for an Unpublished Country'
+    -
+      tag: meta
+      attributes:
+        property: 'og:description'
+        content: 'This should appear, only to privileged users.'
+    -
+      tag: meta
+      attributes:
+        property: 'og:image'
+        content: 'https://microsites-drupal-starter.ddev.site:4443/sites/default/files/statue-800x600_55_6.jpg'
+  path:
+    -
+      alias: /news/published-news-unpublished-country
+      langcode: en
+      pathauto: 1
+  content_translation_source:
+    -
+      value: und
+  content_translation_outdated:
+    -
+      value: false
+  field_body:
+    -
+      value: '<p>This should appear, only to privileged users.</p>'
+      format: basic_html
+  field_featured_image:
+    -
+      entity: 20e0c193-81fb-4de1-a876-0986f5dde59a
+  og_audience:
+    -
+      entity: f143235c-7caf-41dd-980f-9bdceff17475
