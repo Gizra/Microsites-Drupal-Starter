@@ -1,13 +1,19 @@
+<div class="slide-url">https://congo.un.org</div>
 
 ![alt text](assets/un-congo.jpg)
 
 ---
 
+<div class="slide-url">https://haiti.un.org</div>
+
 ![alt text](assets/un-haiti.jpg)
 
 ---
 
+<div class="slide-url">https://iran.un.org/</div>
+
 ![alt text](assets/un-iran.jpg)
+
 
 ---
 
@@ -86,7 +92,7 @@
 
 ---
 
-<div class="slide-caption">The Country node is an Organic Group. Here we control the settings.</div>
+<div class="slide-caption">The Country node is an OG Group. Here we control the settings.</div>
 
 <div class="slide-url">https://iq.microsites-drupal-starter.ddev.site:4443/node/2/edit</div>
 
@@ -94,7 +100,7 @@
 
 ---
 
-<pre><code data-trim class="language-php" data-line-numbers="1-6|8-11|14-23|26-37">
+<pre><code data-trim class="language-php" data-line-numbers="1-6|8-11|14-23|25-36">
 #[OgGroupResolver(
   id: 'country_hostname',
   label: new TranslatableMarkup('Country from hostname'),
@@ -118,7 +124,6 @@ class Country extends OgRouteGroupResolverBase {
       ->range(0, 1);
 
     $nids = $query->execute();
-
 
     // ...
     // Verify it's actually a group.
@@ -190,7 +195,7 @@ function _server_general_node_access_country_hostname(NodeInterface $entity, str
 
 ---
 
-<pre><code data-trim class="language-php" data-line-numbers="5-10|16-22|24-28|30-33|35-38|40-46|48-53|54-56">
+<pre><code data-trim class="language-php" data-line-numbers="1|5-10|16-22|24-28|30-33|35-38|40-46|48-53|54-56">
 final class CountryGroupAccessRouteSubscriber extends RouteSubscriberBase {
 
   // ...
